@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://files.catbox.moe/7w05x3.jpg"/>
+<img src="https://i.imgur.com/rmcflqW.jpeg"/>
 
 # 👋 Hi, I'm Mahuya Adhikari 
 
