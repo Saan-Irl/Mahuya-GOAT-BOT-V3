@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://i.imgur.com/rmcflqW.jpeg"/>
+<img src="https://i.imgur.com/Ex2AxiR.jpeg"/>
 
 # 👋 Hi, I'm Mahuya Adhikari 
 
@@ -10,7 +10,7 @@
 
 <br>
 
-<img src="https://i.imgur.com/Ex2AxiR.jpeg" width="130px" style="border-radius:50%; border:3px solid #00C6FF"/>
+<img src="https://i.imgur.com/X2prTKY.jpeg" width="130px" style="border-radius:50%; border:3px solid #00C6FF"/>
 
 </div>
 
