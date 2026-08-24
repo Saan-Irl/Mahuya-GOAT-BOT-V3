@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://files.catbox.moe/7w05x3.jpg"/>
+<img src="https://i.imgur.com/Ex2AxiR.jpeg"/>
 
-# 👋 Hi, I'm Shahariya Ahmmed Siyam (Siyuuuu)
+# 👋 Hi, I'm Mahuya Adhikari
 
 ### 🚀 Messenger Bot Developer | GoatBot Specialist | Node.js Learner
 
@@ -18,7 +18,7 @@
 
 ## 🧠 About Me
 
-- 🇧🇩 Developer from Bangladesh  
+- 🇧🇩 Developer from INDIA  
 - 🤖 Specialized in Messenger Bot Development  
 - ⚙️ Love modifying and optimizing systems  
 - 🧠 Self-learner using ChatGPT, GEMINI, GROK , etc & real experience  
@@ -72,7 +72,7 @@
 
 <div align="center">
 
-<img src="https://github-readme-stats.vercel.app/api?username=siyuuu-x1&show_icons=true&theme=tokyonight&hide_border=true"/>
+<img src="https://github-readme-stats.vercel.app/api?username=mahuya-x1&show_icons=true&theme=tokyonight&hide_border=true"/>
 
 <img src="https://github-readme-streak-stats.herokuapp.com/?user=siyuuu-x1&theme=tokyonight&hide_border=true"/>
 
@@ -86,7 +86,7 @@
 
 <div align="center">
 
-<img src="https://github-profile-trophy.vercel.app/?username=siyuuu-x1&theme=tokyonight&no-frame=true&row=1&column=6"/>
+<img src="https://github-profile-trophy.vercel.app/?username=mahuya-x1&theme=tokyonight&no-frame=true&row=1&column=6"/>
 
 </div>
 
@@ -96,7 +96,7 @@
 
 <div align="center">
 
-<img src="https://komarev.com/ghpvc/?username=siyuuu-x1&label=Profile%20Views&color=00C6FF&style=for-the-badge"/>
+<img src="https://komarev.com/ghpvc/?username=mahuya-x1&label=Profile%20Views&color=00C6FF&style=for-the-badge"/>
 
 </div>
 
@@ -116,19 +116,19 @@
 
 <div align="center">
 
-<a href="https://m.me/siyuuuuuuuuuuuuuuu">
+<a href="https://m.">
 <img src="https://img.shields.io/badge/Messenger-0084FF?style=for-the-badge&logo=messenger&logoColor=white"/>
 </a>
 
-<a href="https://www.facebook.com/siyuuuuuuuuuuuuuuu">
+<a href="https://www.facebook.com/profile.php?id=61590577010298">
 <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"/>
 </a>
 
-<a href="https://www.instagram.com/phantom_99xs">
+<a href="insta">
 <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"/>
 </a>
 
-<a href="https://wa.me/8801603604722">
+<a href="stfu">
 <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
 </a>
 
