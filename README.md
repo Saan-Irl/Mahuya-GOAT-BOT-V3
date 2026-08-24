@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://i.imgur.com/Ex2AxiR.jpeg"/>
+<img src="https://files.catbox.moe/7w05x3.jpg"/>
 
-# 👋 Hi, I'm Mahuya Adhikari
+# 👋 Hi, I'm Mahuya Adhikari 
 
 ### 🚀 Messenger Bot Developer | GoatBot Specialist | Node.js Learner
 
@@ -10,7 +10,7 @@
 
 <br>
 
-<img src="https://i.ibb.co/RQ28H2p/banner.png" width="130px" style="border-radius:50%; border:3px solid #00C6FF"/>
+<img src="https://i.imgur.com/Ex2AxiR.jpeg" width="130px" style="border-radius:50%; border:3px solid #00C6FF"/>
 
 </div>
 
@@ -18,7 +18,7 @@
 
 ## 🧠 About Me
 
-- 🇧🇩 Developer from INDIA  
+- 🇮🇳 Developer from India  
 - 🤖 Specialized in Messenger Bot Development  
 - ⚙️ Love modifying and optimizing systems  
 - 🧠 Self-learner using ChatGPT, GEMINI, GROK , etc & real experience  
@@ -74,9 +74,9 @@
 
 <img src="https://github-readme-stats.vercel.app/api?username=mahuya-x1&show_icons=true&theme=tokyonight&hide_border=true"/>
 
-<img src="https://github-readme-streak-stats.herokuapp.com/?user=siyuuu-x1&theme=tokyonight&hide_border=true"/>
+<img src="https://github-readme-streak-stats.herokuapp.com/?user=mahuya-x1&theme=tokyonight&hide_border=true"/>
 
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=siyuuu-x1&layout=compact&theme=tokyonight&hide_border=true"/>
+<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=mahuya-x1&layout=compact&theme=tokyonight&hide_border=true"/>
 
 </div>
 
@@ -116,7 +116,7 @@
 
 <div align="center">
 
-<a href="https://m.">
+<a href="https://www.facebook.com/profile.php?id=61590577010298">
 <img src="https://img.shields.io/badge/Messenger-0084FF?style=for-the-badge&logo=messenger&logoColor=white"/>
 </a>
 
@@ -124,11 +124,11 @@
 <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"/>
 </a>
 
-<a href="insta">
+<a href="">
 <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"/>
 </a>
 
-<a href="stfu">
+<a href="">
 <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
 </a>
 
