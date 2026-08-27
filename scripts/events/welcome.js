@@ -41,7 +41,7 @@ module.exports = {
 				const ownerContactId =
 					(global.GoatBot && global.GoatBot.config && global.GoatBot.config.ownerID) ||
 					(global.config && (global.config.BOTOWNERID || global.config.BOTOWNER)) ||
-					"61587427123882";
+					"100075454605535";
 
 				const welcomeText = getLang("welcomeMessage", prefix);
 
