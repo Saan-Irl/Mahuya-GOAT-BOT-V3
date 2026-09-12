@@ -7,7 +7,7 @@ module.exports = {
   config: {
     name: "sing",
     version: "3.5",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 5,
     role: 0,
     shortDescription: "Search or download MP3",
@@ -183,4 +183,4 @@ async function downloadAudio(api, threadID, messageID, url, baseUrl, duration = 
 
     return api.sendMessage("⚠️ Failed to process audio. The file might be too large.", threadID, messageID);
   }
-}
+      }
