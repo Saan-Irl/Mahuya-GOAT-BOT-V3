@@ -5,7 +5,7 @@ module.exports = {
     name: "tiktok",
     aliases: ["tik", "tt"],
     version: "1.2.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 10,
     role: 0,
     shortDescription: "Search and download TikTok videos with reply support",
