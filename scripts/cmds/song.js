@@ -1,81 +1,102 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
+const { PassThrough } = require("stream");
 
 module.exports = {
   config: {
     name: "song",
-    version: "3.0",
+    version: "4.0",
     author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
-    countDown: 3,
+    countDown: 2,
     role: 0,
-    shortDescription: { en: "Search and play a song from SoundCloud" },
-    longDescription: { en: "Fetches a matching song and sends the audio" },
+    shortDescription: {
+      en: "Search and play a song from SoundCloud"
+    },
+    longDescription: {
+      en: "Fetches a matching song and sends the audio"
+    },
     category: "ANIME & MEDIA",
-    guide: { en: "{pn} <song name>" }
+    guide: {
+      en: "{pn} <song name>"
+    }
   },
 
   onStart: async function ({ api, event, args }) {
     const { threadID, messageID } = event;
-    const query = args.join(" ");
+    const query = args.join(" ").trim();
+
     if (!query) {
-      return api.sendMessage("❌ Please enter a song name.\nExample: /song Happy Nation", threadID, messageID);
+      return api.sendMessage(
+        "❌ Please enter a song name.\nExample: /song Happy Nation",
+        threadID,
+        messageID
+      );
     }
 
-    api.setMessageReaction("🎵", messageID, () => {}, true);
-
-    const cacheDir = path.join(__dirname, "cache");
-    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-
     try {
-      const apiUrl = `https://xalman-apis.vercel.app/api/scdlv2?query=${encodeURIComponent(query)}`;
-      const { data } = await axios.get(apiUrl, { timeout: 20000 });
+      api.setMessageReaction("🎵", messageID, () => {}, true);
 
-      if (!data.status || !data.result || !data.result.download_url) {
-        throw new Error(data.message || "No results found");
+      const { data } = await axios.get(
+        `https://xalman-apis.vercel.app/api/scdlv2?query=${encodeURIComponent(query)}`,
+        {
+          timeout: 20000,
+          headers: {
+            "User-Agent": "Mozilla/5.0"
+          }
+        }
+      );
+
+      if (!data?.status || !data?.result?.download_url) {
+        throw new Error(data?.message || "Song not found");
       }
 
-      const { title, download_url } = data.result;
+      const title = data.result.title || query;
+      const downloadUrl = data.result.download_url;
 
-      const filePath = path.join(cacheDir, `${Date.now()}.mp3`);
-      const response = await axios({
-        url: download_url,
-        method: "GET",
+      const audio = await axios.get(downloadUrl, {
         responseType: "stream",
-        headers: { 
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        timeout: 60000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
+          "Accept": "audio/mpeg,audio/*,*/*;q=0.8",
           "Referer": "https://soundcloud.com/"
-        },
-        timeout: 30000
+        }
       });
 
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
-
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
+      const stream = new PassThrough({
+        highWaterMark: 1024 * 1024
       });
 
-      api.setMessageReaction("✅", messageID, () => {}, true);
+      audio.data.on("error", error => {
+        stream.destroy(error);
+      });
 
-      return api.sendMessage(
+      audio.data.pipe(stream);
+
+      stream.path = `${title.replace(/[\\/:*?"<>|]/g, "_")}.mp3`;
+
+      const result = await api.sendMessage(
         {
           body: `🎧 ${title}`,
-          attachment: fs.createReadStream(filePath)
+          attachment: stream
         },
         threadID,
-        () => {
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        },
         messageID
       );
 
+      api.setMessageReaction("✅", messageID, () => {}, true);
+
+      return result;
+
     } catch (error) {
-      console.error("Song download error:", error);
+      console.error("SONG ERROR:", error);
+
       api.setMessageReaction("❌", messageID, () => {}, true);
+
       return api.sendMessage(
-        `❌ Failed to fetch song: ${error.message || "Unknown error"}`,
+        `❌ Failed to fetch song\n\n${error.message || "Unknown error"}`,
         threadID,
         messageID
       );
