@@ -41,7 +41,7 @@ module.exports = {
     const text = args.join(" ");
 
     if (!text || isNaN(styleID)) {
-      return api.sendMessage("╭─❍\n│ 𝖴𝗌𝖺𝗀𝖾: /font [text] [style_id]\n│ 𝖤𝗑: /font xalman 15\n╰───────────⟡", threadID, messageID);
+      return api.sendMessage("╭─❍\n│ 𝖴𝗌𝖺𝗀𝖾: /font [text] [style_id]\n│ 𝖤𝗑: /font saan 15\n╰───────────⟡", threadID, messageID);
     }
 
     try {
