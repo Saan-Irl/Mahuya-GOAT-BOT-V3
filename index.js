@@ -11,7 +11,7 @@ const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-	res.send("NX GoatBot is running on Render Web Service!");
+	res.send("SAAN GoatBot is running on Render Web Service!");
 });
 
 // Render MUST detect a running web server
