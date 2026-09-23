@@ -1,84 +1,89 @@
-const axios = require('axios');
-const { createCanvas, loadImage } = require('canvas');
-const fs = require('fs-extra');
-const path = require('path');
+const axios = require("axios");
+const { loadImage, createCanvas } = require("canvas");
+const fs = require("fs-extra");
+const path = require("path");
 
 module.exports = {
     config: {
         name: "dog",
-        aliases: ["dogs", "kutta"],
-        version: "3.0",
-        author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+        aliases: ["kutta"],
+        version: "2.0",
+        author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
         countDown: 5,
         role: 0,
-        shortDescription: { en: "Convert someone into a dog" },
-        longDescription: { en: "Put user's profile picture on a dog image using canvas" },
-        category: "FUN & SOCIAL",
-        guide: { en: "{pn} @mention / reply / UID" }
+        shortDescription: "Shows two users on a custom background",
+        longDescription: "Draws sender and target user avatars on a background using Reply, Mention, or UID.",
+        category: "image",
+        guide: "{pn} @mention | {pn} uid | [reply] {pn}"
     },
 
-    onStart: async function ({ api, event, args }) {
-        const { threadID, messageID, mentions, type, messageReply, senderID } = event;
-
-        let targetID;
-        if (type === "message_reply") {
-            targetID = messageReply.senderID;
-        } 
-        else if (Object.keys(mentions).length > 0) {
-            targetID = Object.keys(mentions)[0];
-        } 
-        else if (args.length > 0 && !isNaN(args[0])) {
-            targetID = args[0];
-        } 
-        else {
-            targetID = senderID;
-        }
-
-        const cacheDir = path.join(__dirname, 'cache');
-        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
-        const pathImg = path.join(cacheDir, `dog_${targetID}.png`);
-
+    onStart: async function ({ message, event, args }) {
         try {
-            const userInfo = await api.getUserInfo(targetID);
-            const name = userInfo[targetID].name;
+            const senderID = event.senderID;
+            let targetID;
 
-            const dogImgUrl = "https://i.ibb.co/DDMySDsS/a5f597724c71.jpg"; 
-            const avatarUrl = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+            if (event.messageReply) {
+                targetID = event.messageReply.senderID;
+            } else if (Object.keys(event.mentions).length > 0) {
+                targetID = Object.keys(event.mentions)[0];
+            } else if (args[0] && !isNaN(args[0])) {
+                targetID = args[0];
+            } else {
+                return message.reply("Please mention someone, reply to their message, or provide their UID!");
+            }
 
-            const [dogImg, avatarImg] = await Promise.all([
-                loadImage(dogImgUrl),
-                loadImage(avatarUrl)
-            ]);
+            message.reply("Please wait, the masterpiece is loading... ⏳🐶");
 
-            const canvasObj = createCanvas(dogImg.width, dogImg.height);
-            const ctx = canvasObj.getContext('2d');
+            const bgUrl = "https://i.imgur.com/7LzQpW2.jpeg";
+            const avatar1Url = `https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+            const avatar2Url = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
 
-            ctx.drawImage(dogImg, 0, 0, canvasObj.width, canvasObj.height);
+            const bgImage = await loadImage(bgUrl);
+            const av1 = await loadImage(avatar1Url);
+            const av2 = await loadImage(avatar2Url);
+
+            const canvas = createCanvas(bgImage.width, bgImage.height);
+            const ctx = canvas.getContext("2d");
+
+            ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+            const senderPos = { x: 330, y: 270, r: 60 };
+            const mentionPos = { x: 115, y: 430, r: 90 };
+
+            function drawCircleImage(img, cx, cy, r) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+                ctx.restore();
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
+            }
+
+            drawCircleImage(av1, senderPos.x, senderPos.y, senderPos.r);
+            drawCircleImage(av2, mentionPos.x, mentionPos.y, mentionPos.r);
+
+            const cachePath = path.join(__dirname, "cache", `match_${senderID}_${targetID}.png`);
             
-            const x = 290; 
-            const y = 50;  
-            const size = 100; 
+            fs.ensureDirSync(path.join(__dirname, "cache"));
+            fs.writeFileSync(cachePath, canvas.toBuffer());
 
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(avatarImg, x, y, size, size);
-            ctx.restore();
+            await message.reply({
+                body: "Boom! Caught in 4K! 📸🐶 Here is your masterpiece, try not to laugh too hard! 🤣",
+                attachment: fs.createReadStream(cachePath)
+            });
 
-            fs.writeFileSync(pathImg, canvasObj.toBuffer());
+            fs.unlinkSync(cachePath);
 
-            return api.sendMessage({
-                body: `${name}, তোর আসল রূপ 🐕`,
-                attachment: fs.createReadStream(pathImg)
-            }, threadID, () => {
-                if (fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
-            }, messageID);
-
-        } catch (e) {
-            return api.sendMessage("Error executing command ❌", threadID, messageID);
+        } catch (error) {
+            console.error("Canvas Error:", error);
+            message.reply("An error occurred while creating the image. Please check the console.");
         }
     }
 };
-                                   
