@@ -1,79 +1,177 @@
-module.exports.config = {
+const { get } = require("axios");
+const { createCanvas, loadImage } = require("canvas");
+const { existsSync, mkdirSync, writeFileSync, unlinkSync, readFileSync } = require("fs-extra");
+const { join } = require("path");
+
+let cachedTemplate = null;
+
+module.exports = {
+  config: {
     name: "murgi",
-    version: "2.0",
-    role: 2,
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    description: "Fast tag Banglish list (1-2 seconds gap)",
-    category: "nsfw",
-    guide: "{pn} @mention ba message-e reply din",
-    coolDown: 14
-};
+    aliases: ["chicken", "poultry", "cluck"],
+    version: "3.2",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    countDown: 5,
+    role: 0,
+    shortDescription: { en: "Turn someone into a chicken" },
+    longDescription: { en: "Overlay user avatar on a chicken template" },
+    category: "FUN & SOCIAL",
+    guide: { en: "{pn} @mention / reply / UID" }
+  },
 
-module.exports.onStart = async function({ api, event, args }) {
-    const { threadID, messageID, mentions, type, messageReply } = event;
+  onStart: async function ({ api, event, args }) {
+    const { threadID, messageID, senderID, messageReply, mentions, type } = event;
 
-    let targetID, name;
+    let targetID = null;
 
-    if (type === "message_reply") {
-        targetID = messageReply.senderID;
-    } 
-    else if (Object.keys(mentions).length > 0) {
-        targetID = Object.keys(mentions)[0];
+    if (messageReply) {
+      targetID = messageReply.senderID;
+    } else if (Object.keys(mentions).length > 0) {
+      targetID = Object.keys(mentions)[0];
+    } else if (args.length > 0 && /^\d+$/.test(args[0])) {
+      targetID = args[0];
+    } else {
+      targetID = senderID;
     }
 
     if (!targetID) {
-        return api.sendMessage("Bos, jake gali diben take mention din ba tar message-e reply din! 🫂", threadID, messageID);
+      return api.sendMessage("❌ No target found.", threadID, messageID);
     }
 
-    const userInfo = await api.getUserInfo(targetID);
-    name = userInfo[targetID].name;
+    let userInfo;
+    try {
+      userInfo = await api.getUserInfo(targetID);
+    } catch (e) {
+      console.error("Error fetching user info:", e);
+      return api.sendMessage("❌ Failed to fetch user info.", threadID, messageID);
+    }
 
-    const arraytag = [{ id: targetID, tag: name }];
-    const a = (msg) => api.sendMessage(msg, threadID);
+    const user = userInfo[targetID];
+    if (!user) {
+      return api.sendMessage("❌ User not found.", threadID, messageID);
+    }
 
-    a("chuda shuru hoilo... tui thak ebar!");
+    const name = user.name || "Unknown";
 
-    setTimeout(() => { a({ body: "Vodai jane chodar moja tor make jigges kor kemon dichilam choda. " + name, mentions: arraytag }) }, 1000);
-    setTimeout(() => { a({ body: "Khankir pola tor kochi bon re chudi.. " + name, mentions: arraytag }) }, 2200);
-    setTimeout(() => { a({ body: "Madarchod tor ammu pom pom khankir po " + name, mentions: arraytag }) }, 3500);
-    setTimeout(() => { a({ body: "Tor ammur kochi vuday kamor dimu maderchod! " + name, mentions: arraytag }) }, 4800);
-    setTimeout(() => { a({ body: "Khanki magir pola kotha ko kom kom tor ammu re banamu item bomb. " + name, mentions: arraytag }) }, 6000);
-    setTimeout(() => { a({ body: "Depression thekeo tor maire chudaye di magir pola. " + name, mentions: arraytag }) }, 7200);
-    setTimeout(() => { a({ body: "Tor ammu re acharer lov dekhiye ami chudi nishirate. " + name, mentions: arraytag }) }, 8500);
-    setTimeout(() => { a({ body: "Bandir pola tor kochi boner vuda fak kor thutu diye don dukamu. " + name, mentions: arraytag }) }, 9800);
-    setTimeout(() => { a({ body: "Bandi magir pola tor ammu re chudi tor dula bhai er kande fele. " + name, mentions: arraytag }) }, 11000);
-    setTimeout(() => { a({ body: "Tor ammur kala vuday amar mal out ebar tor kochi boner pala. " + name, mentions: arraytag }) }, 12500);
-    setTimeout(() => { a({ body: "Online e gali baj hoye gechos magir pola emon chuda dimu mone rakhbi. " + name, mentions: arraytag }) }, 14000);
-    setTimeout(() => { a({ body: "Batiza shun tor ammu re chudle rag koris na tor boner jama khule de. " + name, mentions: arraytag }) }, 15500);
-    setTimeout(() => { a({ body: "Hi madarchod tor besha jater ammu ta re ador kore chudi. " + name, mentions: arraytag }) }, 17000);
-    setTimeout(() => { a({ body: "Bostir chele tor bon re musolmani dimu ami tor bap. " + name, mentions: arraytag }) }, 18500);
-    setTimeout(() => { a({ body: "Tor mukhe haigga dimu vuski magir pola chup thak. " + name, mentions: arraytag }) }, 20000);
-    setTimeout(() => { a({ body: "Tor ammur hoga diya train vora dimu magir pola. " + name, mentions: arraytag }) }, 21500);
-    setTimeout(() => { a({ body: "DNA test kora dekhbi amar chuda tei tor jonmo hoyeche. " + name, mentions: arraytag }) }, 23000);
-    setTimeout(() => { a({ body: "Kuntar baccha tor boner vuday magur mach chash korum. " + name, mentions: arraytag }) }, 24500);
-    setTimeout(() => { a({ body: "Tor mayer vuda bombay morich diya chudamu jhal lagbe khub! " + name, mentions: arraytag }) }, 26000);
-    setTimeout(() => { a({ body: "Nodi te niye chudi tor maire tui ki rag korbi? " + name, mentions: arraytag }) }, 27500);
-    setTimeout(() => { a({ body: "Tor ammur vuday petrol dhele agun dhoraya dimu khankir pola. " + name, mentions: arraytag }) }, 29000);
-    setTimeout(() => { a({ body: "Bazarer poisa churi kore tor maire hotel e pathash magir pola. " + name, mentions: arraytag }) }, 30500);
-    setTimeout(() => { a({ body: "Tor boner vuda kete kukur ke diye khawamu shayar pola. " + name, mentions: arraytag }) }, 32000);
-    setTimeout(() => { a({ body: "Chira kathi diye tor mar voday khuciye khire banamu. " + name, mentions: arraytag }) }, 33500);
-    setTimeout(() => { a({ body: "Tor mare Green Line bus er upor shuyaya chudmu nodi par korar shomoy. " + name, mentions: arraytag }) }, 35000);
-    setTimeout(() => { a({ body: "Khankir pola kire tor bap ki ekhon o bazar e naki tor mar voday? " + name, mentions: arraytag }) }, 36500);
-    setTimeout(() => { a({ body: "Tor maire launch er cabin e niye chudche amar bondhura. " + name, mentions: arraytag }) }, 38000);
-    setTimeout(() => { a({ body: "Besha magir pola kotha kom bol tor mar voday amar nam lekha. " + name, mentions: arraytag }) }, 39500);
-    setTimeout(() => { a({ body: "Tor ammu re gorur gari te tule chudmu gramer moddhe. " + name, mentions: arraytag }) }, 41000);
-    setTimeout(() => { a({ body: "Maderchod tor bon ke mela te niye chude aslam janos na? " + name, mentions: arraytag }) }, 42500);
-    setTimeout(() => { a({ body: "Tor mar buira voday ekhon o ros ache magir pola. " + name, mentions: arraytag }) }, 44000);
-    setTimeout(() => { a({ body: "Tokai magir pola tor maire chude ammer achar banamu. " + name, mentions: arraytag }) }, 45500);
-    setTimeout(() => { a({ body: "Tor boner vuday lathi diye chudmu kuttar baccha. " + name, mentions: arraytag }) }, 47000);
-    setTimeout(() => { a({ body: "Magir chele tor maire chudte chudte pichon diya mal ber korbo. " + name, mentions: arraytag }) }, 48500);
-    setTimeout(() => { a({ body: "Tor mare dhaka sohorer rasta te shuyaya chudbo shobai mile. " + name, mentions: arraytag }) }, 50000);
-    setTimeout(() => { a({ body: "Kire jaroj tor ammu re ki ekhon o vut e chude naki? " + name, mentions: arraytag }) }, 51500);
-    setTimeout(() => { a({ body: "Tor ammur kochi voday gorom tel dhele chudamu. " + name, mentions: arraytag }) }, 53000);
-    setTimeout(() => { a({ body: "Tor boner pichone boma mariye fatiye dimu magir pola. " + name, mentions: arraytag }) }, 54500);
-    setTimeout(() => { a({ body: "Tor maire chudte chudte paharer upor niye jamu. " + name, mentions: arraytag }) }, 56000);
-    setTimeout(() => { a({ body: "Gadha magir pola tor mar voday ekhon o dhon dukhle tui rag korish. " + name, mentions: arraytag }) }, 57500);
-    
-    setTimeout(() => { a("~ Shala amar jaroj shontan ja ebar bhag! Mission complete.") }, 60000);
+    api.setMessageReaction("🐣", messageID, () => {}, true);
+
+    const tempMsg = await api.sendMessage(`⏳ দাঁড়া ${name} কে মুরগি বানাচ্ছি... 🐔`, threadID);
+
+    try {
+      const imageStream = await generateChickenImage(targetID);
+      await api.unsendMessage(tempMsg.messageID);
+
+      const reply = `🐔 এই নে মুরগী বানিয়ে দিলাম ${name}!`;
+
+      await api.sendMessage(
+        {
+          body: reply,
+          attachment: imageStream,
+          mentions: [{ tag: name, id: targetID }]
+        },
+        threadID,
+        () => {
+          if (imageStream.path && existsSync(imageStream.path)) {
+            unlinkSync(imageStream.path);
+          }
+        },
+        messageID
+      );
+
+      api.setMessageReaction("✅", messageID, () => {}, true);
+
+    } catch (err) {
+      console.error("Chicken generation error:", err);
+      api.setMessageReaction("❌", messageID, () => {}, true);
+      return api.sendMessage(`❌ মুরগি বানাতে সমস্যা হয়েছে! Error: ${err.message || err}`, threadID, messageID);
+    }
+  }
 };
-               
+
+async function getTemplateImage() {
+  if (cachedTemplate) return cachedTemplate;
+
+  const CACHE = join(__dirname, "cache");
+  if (!existsSync(CACHE)) mkdirSync(CACHE, { recursive: true });
+
+  const templatePath = join(CACHE, "chicken_template.png");
+  if (existsSync(templatePath)) {
+    const buffer = readFileSync(templatePath);
+    cachedTemplate = await loadImage(buffer);
+    return cachedTemplate;
+  }
+
+  const templateUrl = "https://i.imgur.com/eitR3yP.jpeg";
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await get(templateUrl, {
+        responseType: "arraybuffer",
+        timeout: 15000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      });
+      const buffer = Buffer.from(response.data);
+      writeFileSync(templatePath, buffer);
+      cachedTemplate = await loadImage(buffer);
+      return cachedTemplate;
+    } catch (err) {
+      lastError = err;
+      console.error(`Template download attempt ${attempt} failed:`, err.message);
+      if (err.response && err.response.status === 429) {
+        const wait = attempt * 2000;
+        await new Promise(r => setTimeout(r, wait));
+      } else {
+        break;
+      }
+    }
+  }
+
+  throw new Error(`Failed to download template after 3 attempts: ${lastError.message}`);
+}
+
+async function generateChickenImage(targetId) {
+  const CACHE = join(__dirname, "cache");
+  if (!existsSync(CACHE)) mkdirSync(CACHE, { recursive: true });
+
+  const avatarUrl = `https://graph.facebook.com/${targetId}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+
+  let avatarBuf;
+  try {
+    const response = await get(avatarUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000
+    });
+    avatarBuf = response.data;
+  } catch (err) {
+    throw new Error("Failed to download avatar: " + err.message);
+  }
+
+  const [avatarImg, templateImg] = await Promise.all([
+    loadImage(avatarBuf),
+    getTemplateImage()
+  ]);
+
+  const canvas = createCanvas(templateImg.width, templateImg.height);
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(templateImg, 0, 0);
+
+  const x = 410, y = 60, size = 80;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(avatarImg, x, y, size, size);
+  ctx.restore();
+
+  const outPath = join(CACHE, `chicken_${targetId}.png`);
+  writeFileSync(outPath, canvas.toBuffer());
+
+  const stream = require("fs").createReadStream(outPath);
+  stream.path = outPath;
+  return stream;
+}

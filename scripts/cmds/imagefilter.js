@@ -1,5 +1,34 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-imagefilter";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 const filters = [
   "grayscale","invert","auto_contrast","solarize","posterize",
   "blur","gaussian_blur","box_blur",
@@ -15,7 +44,7 @@ module.exports = {
     name: "imagefilter",
     aliases: ["filter", "imgfilter"],
     version: "2.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 3,
     role: 0,
     shortDescription: "get 27 Image filter by xalman",
@@ -63,7 +92,7 @@ module.exports = {
         return message.reply("Provide image URL or reply to an image");
       }
 
-      const apiUrl = `https://xalman-image-filter.vercel.app/filter?image_url=${encodeURIComponent(imageUrl)}&filter_type=${filter}`;
+      const apiUrl = `${await getApiBaseUrl()}/filter?image_url=${encodeURIComponent(imageUrl)}&filter_type=${filter}`;
 
       const res = await axios.get(apiUrl, { responseType: "stream" });
 

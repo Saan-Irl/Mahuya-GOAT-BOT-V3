@@ -3,11 +3,17 @@ const fs = require("fs-extra");
 const execSync = require("child_process").execSync;
 const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 
+function githubGet(url) {
+	const token = global.GoatBot.config?.githubToken;
+	const headers = token ? { Authorization: `token ${token}` } : {};
+	return axios.get(url, { headers });
+}
+
 module.exports = {
 	config: {
 		name: "update",
 		version: "1.5",
-		author: "Chat GPT, NTKhang",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		role: 2,
 		description: {
 			en: "Check for and install updates for the chatbot.",
@@ -22,11 +28,11 @@ module.exports = {
 
 	langs: {
 		vi: {
-			noUpdates: "✅ | Bạn đang sử dụng phiên bản mới nhất của GoatBot V2 (v%1).",
+			noUpdates: "✅ | Bạn đang sử dụng phiên bản mới nhất của GOAT-BOT-UPDATED (v%1).",
 			updatePrompt: "💫 | Bạn đang sử dụng phiên bản %1. Hiện tại đã có phiên bản %2. Bạn có muốn cập nhật chatbot lên phiên bản mới nhất không?"
 				+ "\n\n⬆️ | Các tệp sau sẽ được cập nhật:"
 				+ "\n%3%4"
-				+ "\n\nℹ️ | Xem chi tiết tại https://github.com/ntkhang03/Goat-Bot-V2/commits/main"
+				+ "\n\nℹ️ | Xem chi tiết tại https://github.com/goatbotnx/GOAT-BOT-UPDATED/commits/main"
 				+ "\n💡 | Thả cảm xúc bất kỳ vào tin nhắn này để xác nhận",
 			fileWillDelete: "\n🗑️ | Các tệp/thư mục sau sẽ bị xóa:\n%1",
 			andMore: " ...và %1 tệp khác",
@@ -36,11 +42,11 @@ module.exports = {
 			botWillRestart: "🔄 | Bot sẽ khởi động lại ngay!"
 		},
 		en: {
-			noUpdates: "✅ | You are using the latest version of GoatBot V3 (v%1).",
+			noUpdates: "✅ | You are using the latest version of GOAT-BOT-UPDATED (v%1).",
 			updatePrompt: "💫 | You are using version %1. There is a new version %2. Do you want to update the chatbot to the latest version?"
 				+ "\n\n⬆️ | The following files will be updated:"
 				+ "\n%3%4"
-				+ "\n\nℹ️ | See details at https://github.com/ntkhang03/Goat-Bot-V2/commits/main"
+				+ "\n\nℹ️ | See details at https://github.com/goatbotnx/GOAT-BOT-UPDATED/commits/main"
 				+ "\n💡 | React to this message to confirm.",
 			fileWillDelete: "\n🗑️ | The following files/folders will be deleted:\n%1",
 			andMore: " ...and %1 more files",
@@ -61,8 +67,19 @@ module.exports = {
 
 	onStart: async function ({ message, getLang, commandName, event }) {
 		// Check for updates
-		const { data: { version } } = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/package.json");
-		const { data: versions } = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/versions.json");
+		const parseJSON = (data) => typeof data === "string" ? JSON.parse(data) : data;
+
+		let packageData, versions;
+		try {
+			packageData = parseJSON((await githubGet("https://raw.githubusercontent.com/goatbotnx/GOAT-BOT-UPDATED/main/package.json")).data);
+			versions = parseJSON((await githubGet("https://raw.githubusercontent.com/goatbotnx/GOAT-BOT-UPDATED/main/versions.json")).data);
+		} catch (e) {
+			if (e.response?.status === 403)
+				return message.reply("⚠️ GitHub API rate limit reached. Please try again later, or set \"githubToken\" in config.json to raise the limit.");
+			console.error(e);
+			return message.reply("⚠️ Failed to check for updates right now. Please try again later.");
+		}
+		const version = packageData.version;
 
 		const currentVersion = require("../../package.json").version;
 		if (compareVersion(version, currentVersion) < 1)
@@ -115,7 +132,17 @@ module.exports = {
 		if (userID != Reaction.authorID)
 			return;
 
-		const { data: lastCommit } = await axios.get('https://api.github.com/repos/ntkhang03/Goat-Bot-V2/commits/main');
+		let lastCommit;
+		try {
+			lastCommit = (await githubGet('https://api.github.com/repos/goatbotnx/GOAT-BOT-UPDATED/commits/main')).data;
+		} catch (e) {
+			if (e.response?.status === 403)
+				return message.reply("⚠️ GitHub API rate limit reached (this happens without a token — only 60 requests/hour are allowed). Please try again later, or set \"githubToken\" in config.json to raise the limit.");
+			if (e.response?.status === 404)
+				return message.reply("⚠️ Couldn't reach the update repository (404). It may have been renamed or made private.");
+			console.error(e);
+			return message.reply("⚠️ Failed to check the latest commit. Please try again later.");
+		}
 		const lastCommitDate = new Date(lastCommit.commit.committer.date);
 		// if < 5min then stop update and show message
 		if (new Date().getTime() - lastCommitDate.getTime() < 5 * 60 * 1000) {

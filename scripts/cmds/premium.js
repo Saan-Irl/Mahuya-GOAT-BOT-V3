@@ -366,4 +366,4 @@ async function renderSuccessCard(userName, pkgLabel, expireDate, paid, balance) 
   const filePath = path.join(cacheDir, `success_${Date.now()}.png`);
   fs.writeFileSync(filePath, canvas.toBuffer());
   return filePath;
-          }
+}

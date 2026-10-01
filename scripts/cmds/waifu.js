@@ -1,14 +1,43 @@
 const axios = require('axios');
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
     config: {
         name: "waifu",
         version: "3.0",
-        author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-        countDown: 7,
+        author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+        countDown: 5,
         role: 0,
         shortDescription: "Get random anime waifu images",
-        category: "anime",
+        category: "ANIME",
         guide: "{pn}"
     },
 
@@ -17,7 +46,7 @@ module.exports = {
         api.setMessageReaction("🌸", messageID, () => {}, true);
 
         try {
-            const res = await axios.get("https://xalman-apis.vercel.app/api/waifu");
+            const res = await axios.get(`${await getApiBaseUrl()}/api/waifu`);
             const imgUrl = res.data.url;
 
             const stream = (await axios.get(imgUrl, { responseType: 'stream' })).data;

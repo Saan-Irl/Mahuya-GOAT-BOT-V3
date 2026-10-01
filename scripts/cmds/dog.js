@@ -13,7 +13,7 @@ module.exports = {
         role: 0,
         shortDescription: "Shows two users on a custom background",
         longDescription: "Draws sender and target user avatars on a background using Reply, Mention, or UID.",
-        category: "image",
+        category: "FUN & SOCIAL",
         guide: "{pn} @mention | {pn} uid | [reply] {pn}"
     },
 

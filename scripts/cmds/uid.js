@@ -1,63 +1,54 @@
-const { findUid } = global.utils;
-const regExCheckURL = /^(http|https):\/\/[^ "]+$/;
+const { findUid: getFBID } = global.utils;
+const webUrlRegex = /^(https?:\/\/[^\s]+)$/;
 
 module.exports = {
-	config: {
-		name: "uid",
-		version: "1.3",
-		author: "NTKhang",
-		countDown: 5,
-		role: 0,
-		description: {
-			vi: "Xem user id facebook của người dùng",
-			en: "View facebook user id of user"
-		},
-		category: "info",
-		guide: {
-			vi: "   {pn}: dùng để xem id facebook của bạn"
-				+ "\n   {pn} @tag: xem id facebook của những người được tag"
-				+ "\n   {pn} <link profile>: xem id facebook của link profile"
-				+ "\n   Phản hồi tin nhắn của người khác kèm lệnh để xem id facebook của họ",
-			en: "   {pn}: use to view your facebook user id"
-				+ "\n   {pn} @tag: view facebook user id of tagged people"
-				+ "\n   {pn} <profile link>: view facebook user id of profile link"
-				+ "\n   Reply to someone's message with the command to view their facebook user id"
-		}
-	},
+  config: {
+    name: "uid",
+    version: "2.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    role: 0,
+    shortDescription: {
+      en: "Extract Facebook UID"
+    },
+    longDescription: {
+      en: "A versatile tool to get UIDs from profile links, mentions, or message replies."
+    },
+    category: "utility",
+    guide: {
+      en: "{pn} | [tag] | [link] | reply"
+    }
+  },
 
-	langs: {
-		vi: {
-			syntaxError: "Vui lòng tag người muốn xem uid hoặc để trống để xem uid của bản thân"
-		},
-		en: {
-			syntaxError: "Please tag the person you want to view uid or leave it blank to view your own uid"
-		}
-	},
+  onStart: async function ({ message, event, args }) {
+    const { senderID: myID, messageReply: replyData, mentions: taggedUsers } = event;
 
-	onStart: async function ({ message, event, args, getLang }) {
-		if (event.messageReply)
-			return message.reply(event.messageReply.senderID);
-		if (!args[0])
-			return message.reply(event.senderID);
-		if (args[0].match(regExCheckURL)) {
-			let msg = '';
-			for (const link of args) {
-				try {
-					const uid = await findUid(link);
-					msg += `${link} => ${uid}\n`;
-				}
-				catch (e) {
-					msg += `${link} (ERROR) => ${e.message}\n`;
-				}
-			}
-			message.reply(msg);
-			return;
-		}
+    if (replyData) {
+      return message.reply(replyData.senderID);
+    }
 
-		let msg = "";
-		const { mentions } = event;
-		for (const id in mentions)
-			msg += `${mentions[id].replace("@", "")}: ${id}\n`;
-		message.reply(msg || getLang("syntaxError"));
-	}
+    if (args.length === 0) {
+      return message.reply(myID);
+    }
+
+    if (webUrlRegex.test(args[0])) {
+      let responseMsg = "";
+      for (const inputLink of args) {
+        try {
+          const retrievedUid = await getFBID(inputLink);
+          responseMsg += `${retrievedUid}\n`;
+        } catch (error) {
+          responseMsg += `⚠️ Failed: ${error.message || "Invalid Link"}\n`;
+        }
+      }
+      return message.reply(responseMsg.trim());
+    }
+
+    const taggedKeys = Object.keys(taggedUsers);
+    if (taggedKeys.length > 0) {
+      const allMentionedIds = taggedKeys.join("\n");
+      return message.reply(allMentionedIds);
+    }
+
+    return message.reply("Invalid input. Use a link, tag someone, or reply to a message.");
+  }
 };

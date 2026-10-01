@@ -1,5 +1,5 @@
 const axios = require("axios");
-const DIG = require("discord-image-generation");
+const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -7,11 +7,11 @@ module.exports = {
   config: {
     name: "jail",
     version: "1.0.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 5,
     role: 0,
     shortDescription: "jail picture",
-    longDescription: "Create a Jail image with user avatar behind bars",
+    longDescription: "Overlay jail bars on user's profile picture",
     category: "FUN & SOCIAL",
     guide: {
       en: "{pn} [@mention / reply / UID]"
@@ -35,21 +35,34 @@ module.exports = {
       const info = await api.getUserInfo(targetID);
       const name = info[targetID].name;
 
-      api.sendMessage(`অপেক্ষা কর ${name}, তোরে এখনই শ্রীঘরে ঢুকাচ্ছি... 🚔`, threadID, messageID);
+      api.sendMessage(`⏳ Putting ${name} behind bars... 🚔`, threadID, messageID);
+
       const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-      
-      const avatarRes = await axios.get(avatarURL, { responseType: 'arraybuffer' });
-      const avatarBuffer = Buffer.from(avatarRes.data, 'utf-8');
-      const img = await new DIG.Jail().getImage(avatarBuffer);
-      
+      const templateURL = "https://raw.githubusercontent.com/goatbotnx/Sexy-nx2.0Updated/main/xalman/xalmanimg/images/nx-jail.png";
+
+      const [avatarRes, templateRes] = await Promise.all([
+        axios.get(avatarURL, { responseType: 'arraybuffer' }),
+        axios.get(templateURL, { responseType: 'arraybuffer' })
+      ]);
+
+      const avatarImg = await loadImage(avatarRes.data);
+      const templateImg = await loadImage(templateRes.data);
+
+      const canvasSize = 512;
+      const canvas = createCanvas(canvasSize, canvasSize);
+      const ctx = canvas.getContext('2d');
+
+      ctx.drawImage(avatarImg, 0, 0, canvasSize, canvasSize);
+
+      ctx.drawImage(templateImg, 0, 0, canvasSize, canvasSize);
+
       const cacheDir = path.join(__dirname, 'cache');
       if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
       const pathSave = path.join(cacheDir, `jail_${targetID}.png`);
-
-      fs.writeFileSync(pathSave, Buffer.from(img));
+      fs.writeFileSync(pathSave, canvas.toBuffer());
 
       return api.sendMessage({
-        body: `${name}, are in jail now.👮‍♂️⛓️`,
+        body: `${name} is in jail now.👮‍♂️⛓️`,
         attachment: fs.createReadStream(pathSave)
       }, threadID, () => {
         if (fs.existsSync(pathSave)) fs.unlinkSync(pathSave);
@@ -57,8 +70,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      return api.sendMessage("জেলে পাঠাতে সমস্যা হয়েছে, আসামী পালিয়ে গেছে! 🏃‍♂️", threadID, messageID);
+      return api.sendMessage("❌ Failed to put user in jail. The suspect escaped! 🏃‍♂️", threadID, messageID);
     }
   }
 };
-	  

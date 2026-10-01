@@ -1,43 +1,171 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
+const CATEGORY_ALIASES = {
+  bn: "bn",
+  bangla: "bn",
+  bengali: "bn",
+  en: "en",
+  english: "en",
+  math: "math",
+  maths: "math",
+  mathematics: "math"
+};
+
+const CATEGORY_LABELS = {
+  bn: "🇧🇩 Bangla",
+  en: "🇬🇧 English",
+  math: "🧮 Math"
+};
+
+function normalizeCategory(input) {
+  if (!input) return null;
+  const key = String(input).toLowerCase().trim();
+  return CATEGORY_ALIASES[key] || null;
+}
+
 module.exports = {
   config: {
     name: "quiz",
     aliases: ["qz"],
-    version: "5.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    countDown: 8,
+    version: "8.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    countDown: 10,
     role: 0,
-    description: "Play a random quiz with auto-unsend and user restriction",
+    description: "Play a random quiz with elegant design and automatic clean-up",
     category: "GAMES",
-    guide: "{pn} | {pn} list"
+    guide:
+      "{pn} : random bangla quiz\n" +
+      "{pn} bn / bangla : bangla quiz\n" +
+      "{pn} en / english : english quiz\n" +
+      "{pn} math : math quiz\n" +
+      "{pn} list : total questions (all categories)\n" +
+      "{pn} list <category> : total questions in a category"
   },
 
   onStart: async function ({ event, message, args, api }) {
     const { senderID } = event;
-    const BASE_URL = "https://xalman-apis.vercel.app/api/quiz";
+    const BASE_URL = `${await getApiBaseUrl()}/api/quiz`;
 
+    // QUIZ DATABASE LIST
     if (args[0] === "list" || args[0] === "total") {
+      const rawCategory = args[1];
+      const category = normalizeCategory(rawCategory);
+
+      if (rawCategory && !category) {
+        return message.reply(
+          `❌ Invalid category: "${rawCategory}"\n` +
+          `Valid: bn, en, math`
+        );
+      }
+
       try {
-        const res = await axios.get(`${BASE_URL}?list=true`);
-        return message.reply(`📝 𝗤𝗨𝗜𝗭 𝗗𝗔𝗧𝗔𝗕𝗔𝗦𝗘\n━━━━━━━━━━━━━━━━━━\nTotal Questions: ${res.data.total_questions}\nAuthor: ${res.data.author}\nStatus: Active`);
+        const url = category
+          ? `${BASE_URL}?list=true&category=${category}`
+          : `${BASE_URL}?list=true`;
+
+        const res = await axios.get(url);
+        const data = res.data;
+
+        let listMsg;
+
+        if (data.by_category) {
+          listMsg =
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦\n` +
+            `━━━━━━━━━━━━━━\n` +
+            `📝 Total : ${data.total_questions}\n` +
+            `🇧🇩 Bangla : ${data.by_category.bn}\n` +
+            `🇬🇧 English : ${data.by_category.en}\n` +
+            `🧮 Math : ${data.by_category.math}\n` +
+            `🟢 Status : Active`;
+        } else {
+          listMsg =
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦 (${data.category})\n` +
+            `━━━━━━━━━━━━━━\n` +
+            `📝 Total : ${data.total_questions}\n` +
+            `🟢 Status : Active`;
+        }
+
+        return message.reply(listMsg);
       } catch (e) {
-        return message.reply("❌ Could not fetch quiz info.");
+        return message.reply(
+          "❌ Unable to fetch quiz database information."
+        );
       }
     }
 
+    // CATEGORY
+    const rawCategory = args[0];
+    const requestedCategory = normalizeCategory(rawCategory);
+
+    if (rawCategory && !requestedCategory) {
+      return message.reply(
+        `❌ Invalid category: "${rawCategory}"\n` +
+        `Valid: bn, en, math\n\n` +
+        `Usage:\n${this.config.guide.replace(
+          /{pn}/g,
+          this.config.name
+        )}`
+      );
+    }
+
     try {
-      const res = await axios.get(BASE_URL);
+      const url = requestedCategory
+        ? `${BASE_URL}?category=${requestedCategory}`
+        : BASE_URL;
+
+      const res = await axios.get(url);
       const quiz = res.data;
-      if (!quiz.status) return message.reply("❌ API Error.");
+
+      if (!quiz.status) {
+        return message.reply("❌ API returned an invalid response.");
+      }
+
+      const categoryLabel =
+        CATEGORY_LABELS[quiz.category] || quiz.category;
 
       const labels = ["A", "B", "C", "D"];
-      let optionsText = "";
-      quiz.options.forEach((opt, index) => {
-        optionsText += `${labels[index]}. ${opt}\n`;
-      });
 
-      const msgText = `📝 𝗤𝗨𝗘𝗦𝗧𝗜𝗢𝗡:\n${quiz.question}\n\n${optionsText}\n━━━━━━━━━━━━━━━━━━\n⏳ You have 60s to reply!\n`;
+      const optionsText = quiz.options
+        .map((opt, index) => `〔${labels[index]}〕 ${opt}`)
+        .join("\n");
+
+      // COMPACT PREMIUM QUIZ
+      const msgText =
+        `🧠 𝗤𝗨𝗜𝗭 𝗖𝗛𝗔𝗟𝗟𝗘𝗡𝗚𝗘 • ${categoryLabel}\n` +
+        `╭──────────────╮\n` +
+        `❓ ${quiz.question}\n` +
+        `╰──────────────╯\n\n` +
+        `${optionsText}\n\n` +
+        `⏳ Reply with A, B, C or D • 60s`;
 
       return message.reply(msgText, (err, info) => {
         if (err) return;
@@ -59,44 +187,61 @@ module.exports = {
       });
 
     } catch (e) {
-      return message.reply("❌ Server Error.");
+      return message.reply(
+        "❌ Unable to establish a connection with the quiz server."
+      );
     }
   },
 
   onReply: async function ({ event, Reply, message, usersData, api }) {
     const { senderID, body } = event;
 
-    if (senderID !== Reply.author) {
-      return message.reply(`ιʂ ɳσƚ ყσυɾ ϙυιȥ ႦႦყ 🐸`);
-    }
+    if (senderID !== Reply.author) return;
 
     const userAnswer = body.trim().toUpperCase();
     const validOptions = ["A", "B", "C", "D"];
+
     if (!validOptions.includes(userAnswer)) return;
 
     try {
+      api.unsendMessage(Reply.messageID);
+
       let resultMsg = "";
+
       if (userAnswer === Reply.correctAnswer) {
-        const reward = 500;
+        const reward = 2000;
         const userData = await usersData.get(senderID);
         const currentMoney = parseInt(userData.money || 0);
-        await usersData.set(senderID, { money: currentMoney + reward });
-        resultMsg = `✅ 𝗖𝗼𝗿𝗿𝗲𝗰𝘁!\n━━━━━━━━━━━━━━━━━━\n📖 Explanation: ${Reply.correctText}\n💰 Reward: +$${reward}`;
+
+        await usersData.set(senderID, {
+          money: currentMoney + reward
+        });
+
+        resultMsg =
+          `🎉 𝗖𝗢𝗥𝗥𝗘𝗖𝗧!\n` +
+          `╭──────────────╮\n` +
+          `✅ Choice: ${userAnswer}\n` +
+          `📖 ${Reply.correctText}\n` +
+          `💰 +${reward.toLocaleString()} ৳\n` +
+          `╰──────────────╯`;
       } else {
-        resultMsg = `❌ 𝗪𝗿𝗼𝗻𝗴!\n━━━━━━━━━━━━━━━━━━\n📖 Correct Answer: ${Reply.correctAnswer}. ${Reply.correctText}`;
+        resultMsg =
+          `😞 𝗪𝗥𝗢𝗡𝗚!\n` +
+          `╭──────────────╮\n` +
+          `❌ Choice: ${userAnswer}\n` +
+          `✅ Answer: ${Reply.correctAnswer}\n` +
+          `📖 ${Reply.correctText}\n` +
+          `╰──────────────╯`;
       }
 
-      message.reply(resultMsg, (err, info) => {
-        setTimeout(() => {
-          api.unsendMessage(info.messageID);
-          api.unsendMessage(Reply.messageID);
-        }, 10000);
-      });
-
+      message.reply(resultMsg);
       global.GoatBot.onReply.delete(Reply.messageID);
 
     } catch (e) {
-      return message.reply("❌ Processing Error.");
+      console.error(e);
+      return message.reply(
+        "❌ An unexpected error occurred while processing your answer."
+      );
     }
   }
 };

@@ -10,7 +10,7 @@ module.exports = {
         name: "give",
         aliases: ["send", "transfer"],
         version: "6.0",
-        author: "Siam Ahmed Saan",
+        author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
         countDown: 2,
         role: 0,
         description: "Cyberpunk transfer with avatar",

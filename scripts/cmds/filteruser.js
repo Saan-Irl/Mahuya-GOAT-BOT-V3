@@ -5,68 +5,76 @@ function sleep(time) {
 module.exports = {
   config: {
     name: "filteruser",
-    version: "2.0",
+    version: "2.2",
     author: "NTKhang",
     countDown: 5,
     role: 1,
     description: {
-      vi: "lọc thành viên nhóm theo số tin nhắn hoặc bị khóa acc",
       en: "filter group members by number of messages or locked account"
     },
     category: "box chat",
     guide: {
-      vi: "   {pn} [<số tin nhắn> | die]",
       en: "   {pn} [<number of messages> | die]"
     }
   },
 
   langs: {
-    vi: {
-      needAdmin: "⚠️ | Vui lòng thêm bot làm quản trị viên của box để sử dụng lệnh này",
-      confirm: "⚠️ | Bạn có chắc chắn muốn xóa thành viên nhóm có số tin nhắn nhỏ hơn %1 không?\nThả cảm xúc bất kì vào tin nhắn này để xác nhận",
-      kickByBlock: "✅ | Đã xóa thành công %1 thành viên bị khóa acc",
-      kickByMsg: "✅ | Đã xóa thành công %1 thành viên có số tin nhắn nhỏ hơn %2",
-      kickError: "❌ | Đã xảy ra lỗi không thể kick %1 thành viên:\n%2",
-      noBlock: "✅ | Không có thành viên nào bị khóa acc",
-      noMsg: "✅ | Không có thành viên nào có số tin nhắn nhỏ hơn %1"
-    },
     en: {
       needAdmin: "⚠️ | Please add the bot as a group admin to use this command",
+      botNotAdmin: "🤖 | Bot is not an admin in this group. Please make bot admin first.",
       confirm: "⚠️ | Are you sure you want to delete group members with less than %1 messages?\nReact to this message to confirm",
-      kickByBlock: "✅ | Successfully removed %1 members unavailable account",
+      kickByBlock: "✅ | Successfully removed %1 members with locked accounts",
       kickByMsg: "✅ | Successfully removed %1 members with less than %2 messages",
       kickError: "❌ | An error occurred and could not kick %1 members:\n%2",
-      noBlock: "✅ | There are no members who are locked acc",
-      noMsg: "✅ | There are no members with less than %1 messages"
+      noBlock: "✅ | There are no members with locked accounts",
+      noMsg: "✅ | There are no members with less than %1 messages",
+      noMembers: "✅ | No members to remove.",
+      dieInvalid: "❌ | Invalid command. Use: filteruser <number> or filteruser die",
+      notAdminMsg: "❌ | You are not a group admin. Only admins can use this command."
     }
   },
 
-  onStart: async function ({ api, args, threadsData, message, event, commandName, getLang }) {
-    const threadInfo = await api.getThreadInfo(event.threadID);
+  onStart: async function ({ api, args, message, event, commandName, getLang }) {
+    const { senderID, threadID } = event;
+
+    const threadInfo = await api.getThreadInfo(threadID);
     const botID = api.getCurrentUserID();
     const isBotAdmin = threadInfo.adminIDs.some(admin => admin.id == botID);
+    const isUserAdmin = threadInfo.adminIDs.some(admin => admin.id == senderID);
+
+    if (!isUserAdmin) {
+      return message.reply(getLang("notAdminMsg"));
+    }
+
+    if (!args[0]) {
+      return message.reply(getLang("dieInvalid"));
+    }
 
     if (!isBotAdmin) {
-      return message.reply(getLang("needAdmin"));
+      return message.reply(getLang("botNotAdmin"));
     }
 
     if (!isNaN(args[0])) {
-      message.reply(getLang("confirm", args[0]), (err, info) => {
+      const minMsg = Number(args[0]);
+      if (minMsg < 1) {
+        return message.reply("❌ | Minimum message count must be greater than 0.");
+      }
+      message.reply(getLang("confirm", minMsg), (err, info) => {
         global.GoatBot.onReaction.set(info.messageID, {
-          author: event.senderID,
+          author: senderID,
           messageID: info.messageID,
-          minimum: Number(args[0]),
+          minimum: minMsg,
           commandName
         });
       });
-    } else if (args[0] == "die") {
+    } else if (args[0].toLowerCase() === "die") {
       const membersBlocked = threadInfo.userInfo.filter(user => user.type !== "User");
       const errors = [];
       const success = [];
       for (const user of membersBlocked) {
         if (user.type !== "User" && !threadInfo.adminIDs.some(id => id == user.id)) {
           try {
-            await api.removeUserFromGroup(user.id, event.threadID);
+            await api.removeUserFromGroup(user.id, threadID);
             success.push(user.id);
           } catch (e) {
             errors.push(user.name);
@@ -80,24 +88,30 @@ module.exports = {
         msg += `${getLang("kickByBlock", success.length)}\n`;
       if (errors.length > 0)
         msg += `${getLang("kickError", errors.length, errors.join("\n"))}\n`;
-      if (msg == "")
+      if (msg === "")
         msg += getLang("noBlock");
       message.reply(msg);
     } else {
-      message.SyntaxError();
+      message.reply(getLang("dieInvalid"));
     }
   },
 
-  onReaction: async function ({ api, Reaction, event, threadsData, message, getLang }) {
+  onReaction: async function ({ api, Reaction, event, message, getLang }) {
     const { minimum = 1, author } = Reaction;
+    const { senderID, threadID } = event;
     if (event.userID != author) return;
 
-    const threadInfo = await api.getThreadInfo(event.threadID);
+    const threadInfo = await api.getThreadInfo(threadID);
     const botID = api.getCurrentUserID();
+    const isUserAdmin = threadInfo.adminIDs.some(admin => admin.id == senderID);
     const isBotAdmin = threadInfo.adminIDs.some(admin => admin.id == botID);
 
+    if (!isUserAdmin) {
+      return message.reply(getLang("notAdminMsg"));
+    }
+
     if (!isBotAdmin) {
-      return message.reply(getLang("needAdmin"));
+      return message.reply(getLang("botNotAdmin"));
     }
 
     const adminIDs = threadInfo.adminIDs.map(admin => admin.id);
@@ -108,11 +122,15 @@ module.exports = {
       !adminIDs.includes(member.id)
     );
 
+    if (membersCountLess.length === 0) {
+      return message.reply(getLang("noMembers"));
+    }
+
     const errors = [];
     const success = [];
     for (const member of membersCountLess) {
       try {
-        await api.removeUserFromGroup(member.id, event.threadID);
+        await api.removeUserFromGroup(member.id, threadID);
         success.push(member.id);
       } catch (e) {
         errors.push(member.name);
@@ -125,7 +143,7 @@ module.exports = {
       msg += `${getLang("kickByMsg", success.length, minimum)}\n`;
     if (errors.length > 0)
       msg += `${getLang("kickError", errors.length, errors.join("\n"))}\n`;
-    if (msg == "")
+    if (msg === "")
       msg += getLang("noMsg", minimum);
     message.reply(msg);
   }

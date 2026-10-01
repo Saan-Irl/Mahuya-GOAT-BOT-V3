@@ -1,4 +1,33 @@
 const axios = require("axios");
+
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
 const fs = require("fs");
 const path = require("path");
 const { createReadStream } = require("fs");
@@ -12,13 +41,13 @@ module.exports = {
     role: 0,
     shortDescription: "Search or download MP3",
     longDescription: "Search songs and download MP3 from YouTube",
-    category: "ANIME & MEDIA",
+    category: "MEDIA",
     guide: "{p}sing <song name or YouTube link>"
   },
 
   onStart: async function ({ api, event, args }) {
     const { threadID, messageID, senderID, messageReply } = event;
-    const BASE_URL = "https://xalman-apis.vercel.app/api";
+    const BASE_URL = `${await getApiBaseUrl()}/api`;
 
     let query = args.join(" ");
 
@@ -183,4 +212,4 @@ async function downloadAudio(api, threadID, messageID, url, baseUrl, duration = 
 
     return api.sendMessage("⚠️ Failed to process audio. The file might be too large.", threadID, messageID);
   }
-      }
+}

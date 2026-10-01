@@ -1,12 +1,41 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
   config: {
     name: "flaggame",
     aliases: ["flag"],
     version: "1.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    countDown: 5,
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    countDown: 7,
     role: 0,
     description: "Guess the country by its flag",
     category: "GAMES",
@@ -15,7 +44,7 @@ module.exports = {
 
   onStart: async function ({ event, message }) {
     const { senderID } = event;
-    const API_URL = "https://xalman-apis.vercel.app/api/flaggame";
+    const API_URL = `${await getApiBaseUrl()}/api/flaggame`;
 
     try {
       const res = await axios.get(API_URL);

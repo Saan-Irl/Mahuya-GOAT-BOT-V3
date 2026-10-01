@@ -552,7 +552,7 @@ async function createBalanceCard({
         "rgba(255,255,255,0.45)";
 
     ctx.fillText(
-        "MADE BY XALMAN",
+        "MADE BY 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃",
         745,
         420
     );
@@ -815,4 +815,4 @@ function formatCardBalance(value) {
     }
 
     return n.toLocaleString("en-US");
-            }
+}

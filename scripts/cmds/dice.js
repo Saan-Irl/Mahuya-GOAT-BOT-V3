@@ -2,7 +2,7 @@ module.exports = {
   config: {
     name: "dice",
     version: "1.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     role: 0,
     countDown: 5,
     category: "GAMES",
@@ -43,7 +43,7 @@ module.exports = {
 
     const betAmount = parseAmount(args[0]);
     const minBet = 100;
-    const maxBet = 100000000000;
+    const maxBet = 10000000000000000;
 
     if (isNaN(betAmount) || betAmount < minBet) {
       return message.reply(`🎲 Minimum bet is 100$\nExample: /dice 1k 7`);

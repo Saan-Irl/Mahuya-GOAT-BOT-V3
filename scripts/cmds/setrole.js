@@ -2,14 +2,14 @@ module.exports = {
 	config: {
 		name: "setrole",
 		version: "1.4",
-		author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		countDown: 5,
 		role: 2,
 		description: {
 			vi: "Chỉnh sửa role của lệnh (những lệnh có role < 2)",
 			en: "Edit role of command (commands with role < 2)"
 		},
-		category: "info",
+		category: "OWNER",
 		guide: {
 			vi: "   {pn} <commandName> <new role>: set role mới cho lệnh"
 				+ "\n   Với:"

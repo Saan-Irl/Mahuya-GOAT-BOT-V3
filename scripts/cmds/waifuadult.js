@@ -1,32 +1,75 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
   config: {
     name: "waifuadult",
-    aliases: ["anihot", "pnx", "noughti"],
     version: "2.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    countDown: 6,
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    countDown: 3,
     role: 0,
     shortDescription: "Get anime nsfw image",
-    longDescription: "Fetch direct image from API",
-    category: "ANIME & MEDIA",
+    longDescription: "Fetch direct image from API and automatic unsent after 10 second",
+    category: "NSFW",
     guide: "{pn}"
   },
 
   onStart: async function ({ api, event }) {
     try {
-      const response = await axios.get("https://xalman-apis.vercel.app/api/waifuadult", {
-        responseType: "stream"
-      });
+      const response = await axios.get(
+        `${await getApiBaseUrl()}/api/waifuadult`,
+        {
+          responseType: "stream"
+        }
+      );
 
-      return api.sendMessage({
-        body: "😋𝗛𝗲𝗿𝗲 𝗶𝘀 𝘆𝗼𝘂𝗿 𝗮𝗱𝘂𝗹𝘁 𝗮𝗻𝗶𝗺𝗲 𝗶𝗺𝗮𝗴𝗲🫦💋",
-        attachment: response.data
-      }, event.threadID, event.messageID);
-
-    } catch (error) {
-      return api.sendMessage("Error fetching image.", event.threadID);
+      api.sendMessage(
+        {
+          body: "😋Here is your adult anime image🫦💋",
+          attachment: response.data
+        },
+        event.threadID,
+        (err, info) => {
+          if (!err) {
+            setTimeout(() => api.unsendMessage(info.messageID), 10000);
+          }
+        },
+        event.messageID
+      );
+    } catch {
+      api.sendMessage(
+        "Error fetching image.",
+        event.threadID,
+        event.messageID
+      );
     }
   }
 };

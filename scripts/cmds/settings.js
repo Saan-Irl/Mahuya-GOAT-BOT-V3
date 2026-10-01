@@ -2,7 +2,7 @@ module.exports = {
  config: {
  name: "settings",
  version: "1.0.4",
- author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+ author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
  countDown: 5,
  role: 2, // Only bot owner can use
  shortDescription: {
@@ -13,7 +13,7 @@ module.exports = {
  vi: "Bảng điều khiển cài đặt và quản lý bot",
  en: "Configuration and management panel for the bot"
  },
- category: "admin",
+ category: "SYSTEM",
  guide: {
  vi: "Gửi lệnh để xem bảng điều khiển",
  en: "Send command to view control panel"

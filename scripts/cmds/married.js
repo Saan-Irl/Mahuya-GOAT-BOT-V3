@@ -7,12 +7,12 @@ module.exports = {
     name: "marry",
     aliases: ["married", "biya", "engage"], 
     version: "3.7",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    countDown: 7,
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    countDown: 5,
     role: 0,
     shortDescription: "Propose with custom image",
     longDescription: "Generate a propose image with avatars perfectly placed over characters’ heads (swapped).",
-    category: "FUN & SOCIAL",
+    category: "LOVE",
     guide: "{pn} @mention"
   },
 

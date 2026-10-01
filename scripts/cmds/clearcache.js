@@ -11,7 +11,7 @@ module.exports = {
     countDown: 5,
     shortDescription: { en: "Clear cache folder" },
     longDescription: { en: "Delete all files from cache folder to free up storage space." },
-    category: "admin",
+    category: "OWNER",
     guide: { en: "{pn} - Clear all cache files" }
   },
 

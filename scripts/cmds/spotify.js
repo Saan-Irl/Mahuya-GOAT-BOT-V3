@@ -1,4 +1,33 @@
 const axios = require("axios");
+
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -12,7 +41,7 @@ module.exports = {
     role: 0,
     shortDescription: { en: "Search and download Spotify songs" },
     longDescription: { en: "Search for a song on Spotify and download it directly" },
-    category: "ANIME & MEDIA",
+    category: "MEDIA",
     guide: { en: "{pn} <song name>\nExample: /spotify Happy Nation" }
   },
 
@@ -32,7 +61,7 @@ module.exports = {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const searchUrl = `https://xalman-apis.vercel.app/api/spotifysearch?query=${encodeURIComponent(query)}`;
+        const searchUrl = `${await getApiBaseUrl()}/api/spotifysearch?query=${encodeURIComponent(query)}`;
         const searchRes = await axios.get(searchUrl, { timeout: 15000 });
 
         if (searchRes.data.status && searchRes.data.results && searchRes.data.results.length > 0) {
@@ -105,11 +134,12 @@ module.exports = {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const downloadUrl = `https://xalman-apis.vercel.app/api/universaldownloader?url=${encodeURIComponent(trackUrl)}`;
+        const downloadUrl = `${await getApiBaseUrl()}/api/alldl?url=${encodeURIComponent(trackUrl)}`;
         const downloadRes = await axios.get(downloadUrl, { timeout: 30000 });
+        const data = downloadRes.data;
 
-        if (downloadRes.data.status && downloadRes.data.data && downloadRes.data.data.url) {
-          downloadData = downloadRes.data.data;
+        if (data.success && data.audios && data.audios.length > 0) {
+          downloadData = data;
           break;
         } else {
           throw new Error("Failed to get download link");
@@ -128,7 +158,7 @@ module.exports = {
     }
 
     try {
-      const audioLink = downloadData.url;
+      const audioLink = downloadData.audios[0].audiourl;
       const title = downloadData.title || track.title;
       const artist = track.artist || "Unknown";
 

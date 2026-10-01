@@ -1,66 +1,107 @@
 const axios = require("axios");
+
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
 const fs = require("fs-extra");
 const path = require("path");
 
 module.exports = {
   config: {
     name: "memevid",
-    aliases: ["memevideo"], 
-    version: "2.5",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    aliases: ["memevideo"],
+    version: "3.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 5,
     role: 0,
-    description: "Get a random meme video",
-    category: "ANIME & MEDIA",
+    description: "Get a random meme video with auto-retry",
+    category: "MEDIA",
     guide: "{pn}"
   },
 
   onStart: async function ({ api, event, message }) {
-    const { messageID } = event;
+    const { messageID, threadID } = event;
     const CACHE_DIR = path.join(__dirname, "cache");
+    const MAX_RETRIES = 3;
     const xalman_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-    try {
-      api.setMessageReaction("⏳", messageID, () => {}, true);
+    api.setMessageReaction("⏳", messageID, () => {}, true);
 
-      const res = await axios.get("https://xalman-apis.vercel.app/api/memevid");
-      const videoUrl = res.data.url;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await axios.get(`${await getApiBaseUrl()}/api/memevid`, { timeout: 10000 });
+        const videoUrl = res.data.url;
 
-      if (!videoUrl) {
-        api.setMessageReaction("❌", messageID, () => {}, true);
-        return message.reply("Could not find a video URL.");
-      }
+        if (!videoUrl) {
+          throw new Error("No video URL found");
+        }
 
-      if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
+        if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 
-      const filePath = path.join(CACHE_DIR, `${Date.now()}.mp4`);
+        const filePath = path.join(CACHE_DIR, `meme_${Date.now()}.mp4`);
 
-      const response = await axios({
-        method: 'get',
-        url: videoUrl,
-        headers: { "User-Agent": xalman_UA },
-        responseType: 'stream'
-      });
+        const response = await axios({
+          method: 'get',
+          url: videoUrl,
+          headers: { "User-Agent": xalman_UA },
+          responseType: 'stream',
+          timeout: 20000
+        });
 
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
+        const writer = fs.createWriteStream(filePath);
+        response.data.pipe(writer);
 
-      writer.on('finish', () => {
+        await new Promise((resolve, reject) => {
+          writer.on('finish', resolve);
+          writer.on('error', reject);
+        });
+
         api.setMessageReaction("✅", messageID, () => {}, true);
-        return message.reply({
-          body: "Here is your meme!😙",
+
+        const msg = `🎬 𝗠𝗘𝗠𝗘 𝗩𝗜𝗗𝗘𝗢\n━━━━━━━━━━━━━━━━━━\nHere is your meme! 😙`;
+
+        return api.sendMessage({
+          body: msg,
           attachment: fs.createReadStream(filePath)
-        }, () => fs.unlinkSync(filePath));
-      });
+        }, threadID, () => {
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) {}
+          }
+        });
 
-      writer.on('error', (err) => {
-        throw err;
-      });
-
-    } catch (e) {
-      console.error(e);
-      api.setMessageReaction("⚠️", messageID, () => {}, true);
-      return message.reply("An error occurred while fetching the video.");
+      } catch (error) {
+        console.error(`Attempt ${attempt} failed:`, error.message);
+        if (attempt === MAX_RETRIES) {
+          api.setMessageReaction("❌", messageID, () => {}, true);
+          return message.reply(`❌ Failed after ${MAX_RETRIES} attempts. Please try again later.`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+      }
     }
   }
 };

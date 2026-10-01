@@ -1,46 +1,108 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
   config: {
     name: "prompt",
-    aliases: ["img2prompt", "cap"],
-    version: "5.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    aliases: ["imgprompt", "p"],
+    version: "4.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 5,
     role: 0,
-    shortDescription: "Generates a prompt from image",
-    category: "AI & IMAGE GENERATION",
-    guide: "{pn} [reply to image]"
+    shortDescription: "Generate prompt from image",
+    longDescription: "Generate an AI prompt from a replied image",
+    category: "AI",
+    guide: "{pn} (reply to an image)"
   },
 
   onStart: async function ({ api, event }) {
     const { threadID, messageID, type, messageReply } = event;
-    const API_URL = "https://xalman-apis.vercel.app/api/prompt";
 
-    let imageUrl;
-    if (type === "message_reply" && messageReply.attachments[0]?.type === "photo") {
-      imageUrl = messageReply.attachments[0].url;
-    } else {
-      return api.sendMessage("╭─❍\n│ 𝖯𝗅𝖾𝖺𝗌𝖾 𝗋𝖾𝗉𝗅𝗒 𝗍𝗈 𝖺𝗇 𝗂𝗆𝖺𝗀𝖾!\n╰───────────⟡", threadID, messageID);
+    if (type !== "message_reply" || !messageReply?.attachments?.length) {
+      return api.sendMessage(
+        "❌ Please reply to an image to generate a prompt.",
+        threadID,
+        messageID
+      );
+    }
+
+    const attachment = messageReply.attachments.find(
+      item => item?.type === "photo" && item?.url
+    );
+
+    if (!attachment) {
+      return api.sendMessage(
+        "❌ Please reply to a valid image.",
+        threadID,
+        messageID
+      );
     }
 
     api.setMessageReaction("🔍", messageID, () => {}, true);
 
     try {
-      const res = await axios.post(API_URL, {
-        imageUrl: imageUrl
-      });
+      const response = await axios.get(
+        `${await getApiBaseUrl()}/api/prompt`,
+        {
+          params: { url: attachment.url },
+          timeout: 120000
+        }
+      );
 
-      if (res.data.status === "success") {
-        const prompt = res.data.data.prompt;
-        api.setMessageReaction("✅", messageID, () => {}, true);
-        return api.sendMessage(`${prompt}`, threadID, messageID);
-      } else {
-        throw new Error("Invalid API Response");
+      const data = response?.data;
+
+      if (!data?.status || !data?.prompt) {
+        throw new Error(data?.error || data?.message || "Prompt not found");
       }
+
+      const prompt = String(data.prompt)
+        .replace(/\\n/g, " ")
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      api.setMessageReaction("✅", messageID, () => {}, true);
+
+      const msg = `🖼️ 𝗜𝗠𝗔𝗚𝗘 𝗣𝗥𝗢𝗠𝗣𝗧\n━━━━━━━━━━━━━━━━━━\n${prompt}`;
+
+      return api.sendMessage(msg, threadID, messageID);
+
     } catch (error) {
+      console.error("Prompt Error:", error.message);
       api.setMessageReaction("❌", messageID, () => {}, true);
-      return api.sendMessage("✕ Failed to analyze the image!", threadID, messageID);
+      return api.sendMessage(
+        "❌ Failed to analyze the image. Please try again.",
+        threadID,
+        messageID
+      );
     }
   }
 };

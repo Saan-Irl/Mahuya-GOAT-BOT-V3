@@ -1,15 +1,22 @@
-const Canvas = require("canvas");
+const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
-const GIFEncoder = require("gif-encoder-2");
+
+const GIF_URLS = {
+  loss: "https://i.imgur.com/1jkKESg.gif",
+  "2x": "https://i.imgur.com/wGVdDKi.gif",
+  "3x": "https://i.imgur.com/1EWNoe9.gif",
+  "5x": "https://i.imgur.com/8thK7IV.gif",
+  "7x": "https://i.imgur.com/bI428mz.gif"
+};
 
 module.exports = {
   config: {
     name: "wheel",
-    version: "3.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    version: "4.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     role: 0,
-    countDown: 8,
+    countDown: 18,
     category: "GAMES",
     guide: {
       en: "{pn} <amount>"
@@ -19,232 +26,336 @@ module.exports = {
   onStart: async ({ message, event, args, usersData, api }) => {
     const { senderID, threadID } = event;
 
+    const cacheDir = path.join(__dirname, "cache");
+
+    if (!fs.existsSync(cacheDir))
+      fs.mkdirSync(cacheDir, { recursive: true });
+
+    // =========================
+    // MONEY FORMAT
+    // =========================
     const formatMoney = (num) => {
       const n = Number(num);
-      if (n === Infinity || isNaN(n)) return "∞";
-      if (n < 1000) return n.toFixed(0);
+
+      if (n === Infinity || isNaN(n))
+        return "∞";
+
+      if (n < 1000)
+        return n.toFixed(0);
+
       const units = [
+        { v: 1e15, s: "Q" },
         { v: 1e12, s: "T" },
         { v: 1e9, s: "B" },
         { v: 1e6, s: "M" },
         { v: 1e3, s: "K" }
       ];
-      for (let u of units) {
-        if (n >= u.v)
-          return (n / u.v).toFixed(2).replace(/\.00$/, "") + u.s;
+
+      for (const u of units) {
+        if (n >= u.v) {
+          return (
+            (n / u.v)
+              .toFixed(2)
+              .replace(/\.00$/, "") + u.s
+          );
+        }
       }
+
       return n.toLocaleString();
     };
 
+    // =========================
+    // AMOUNT PARSER
+    // =========================
     function parseAmount(input) {
-      if (!input) return NaN;
-      let a = input.toLowerCase();
-      if (a.endsWith("k")) return parseFloat(a) * 1e3;
-      if (a.endsWith("m")) return parseFloat(a) * 1e6;
-      if (a.endsWith("b")) return parseFloat(a) * 1e9;
-      if (a.endsWith("t")) return parseFloat(a) * 1e12;
-      return parseInt(a);
+      if (!input)
+        return NaN;
+
+      const a = input.toLowerCase().replace(/,/g, "");
+
+      if (a.endsWith("k"))
+        return parseFloat(a) * 1e3;
+
+      if (a.endsWith("m"))
+        return parseFloat(a) * 1e6;
+
+      if (a.endsWith("b"))
+        return parseFloat(a) * 1e9;
+
+      if (a.endsWith("t"))
+        return parseFloat(a) * 1e12;
+
+      if (a.endsWith("q"))
+        return parseFloat(a) * 1e15;
+
+      return parseFloat(a);
     }
 
-    const betAmount = parseAmount(args[0]);
+    // =========================
+    // SETTINGS
+    // =========================
     const minBet = 100;
-    const maxBet = 1e12;
+    const maxBet = 1e15; // 1Q
+
+    const maxSpins = 10;
+    const resetTime = 12 * 60 * 60 * 1000; // 12 hours
+
+    const winRate = 64;
+    const lossRate = 35;
+
+    // =========================
+    // BET CHECK
+    // =========================
+    const betAmount = parseAmount(args[0]);
 
     if (isNaN(betAmount) || betAmount < minBet) {
-      return message.reply(`🎰 Minimum bet is 100$\nExample: /wheel 1k`);
+      return message.reply(
+        `🎡 𝗪𝗛𝗘𝗘𝗟 𝗦𝗣𝗜𝗡\n\n` +
+        `❌ Minimum bet: ${formatMoney(minBet)}$\n` +
+        `💡 Example: /wheel 1k`
+      );
     }
 
     if (betAmount > maxBet) {
-      return message.reply(`🚫 Max bet: ${formatMoney(maxBet)}$`);
+      return message.reply(
+        `🚫 Maximum bet: ${formatMoney(maxBet)}$`
+      );
     }
 
+    // =========================
+    // USER BALANCE
+    // =========================
     let userData = await usersData.get(senderID);
-    if (!userData) {
+
+    if (!userData)
       userData = { money: 0 };
-    }
+
     const currentMoney = Number(userData.money || 0);
 
     if (betAmount > currentMoney) {
-      return message.reply(`💸 Not enough balance!\nBalance: ${formatMoney(currentMoney)}$`);
+      return message.reply(
+        `💸 𝗡𝗢𝗧 𝗘𝗡𝗢𝗨𝗚𝗛 𝗕𝗔𝗟𝗔𝗡𝗖𝗘\n\n` +
+        `💳 Balance: ${formatMoney(currentMoney)}$\n` +
+        `🎯 Bet: ${formatMoney(betAmount)}$`
+      );
     }
 
-    if (!global.wheelLimit) global.wheelLimit = {};
+    // =========================
+    // SPIN LIMIT
+    // =========================
+    if (!global.wheelLimit)
+      global.wheelLimit = {};
+
     const now = Date.now();
-    if (!global.wheelLimit[senderID] || (now - global.wheelLimit[senderID].lastReset > 3600000)) {
-      global.wheelLimit[senderID] = { count: 0, lastReset: now };
+
+    if (
+      !global.wheelLimit[senderID] ||
+      now - global.wheelLimit[senderID].lastReset >= resetTime
+    ) {
+      global.wheelLimit[senderID] = {
+        count: 0,
+        lastReset: now
+      };
     }
 
-    const maxSpins = 12;
-    if (global.wheelLimit[senderID].count >= maxSpins) {
-      return message.reply(`🚫 Daily limit reached (${maxSpins} spins)`);
+    const limitData = global.wheelLimit[senderID];
+
+    if (limitData.count >= maxSpins) {
+      const remaining =
+        resetTime - (now - limitData.lastReset);
+
+      const hours = Math.floor(
+        remaining / (60 * 60 * 1000)
+      );
+
+      const minutes = Math.floor(
+        (remaining % (60 * 60 * 1000)) /
+          (60 * 1000)
+      );
+
+      return message.reply(
+        `🚫 𝗪𝗛𝗘𝗘𝗟 𝗟𝗜𝗠𝗜𝗧\n\n` +
+        `🎲 Limit: ${maxSpins} spins\n` +
+        `⏳ Reset: ${hours}h ${minutes}m\n\n` +
+        `You can spin again after 12 hours.`
+      );
     }
 
-    const segments = [
-      { label: "1x", value: 1, weight: 0.31, color: "#FF6B6B" },
-      { label: "2x", value: 2, weight: 0.28, color: "#4ECDC4" },
-      { label: "3x", value: 3, weight: 0.20, color: "#FFE66D" },
-      { label: "5x", value: 5, weight: 0.12, color: "#A8E6CF" },
-      { label: "7x", value: 7, weight: 0.06, color: "#FF8A5C" },
-      { label: "10x", value: 10, weight: 0.03, color: "#6C5B7B" }
-    ];
+    // =========================
+    // RESULT SYSTEM
+    // 64% WIN
+    // 35% LOSS
+    // 1% REFUND / NEUTRAL
+    // =========================
+    const chance = Math.floor(Math.random() * 100);
 
-    const rand = Math.random();
-    let cumulative = 0;
-    let resultIndex = 0;
-    for (let i = 0; i < segments.length; i++) {
-      cumulative += segments[i].weight;
-      if (rand < cumulative) {
-        resultIndex = i;
-        break;
+    let resultType = "neutral";
+    let multiplier = 0;
+
+    if (chance < winRate) {
+      // WIN: 0-63 = 64%
+      const rewardChance =
+        Math.floor(Math.random() * 100);
+
+      if (rewardChance < 50) {
+        resultType = "2x";
+        multiplier = 2;
+      } else if (rewardChance < 80) {
+        resultType = "3x";
+        multiplier = 3;
+      } else if (rewardChance < 95) {
+        resultType = "5x";
+        multiplier = 5;
+      } else {
+        resultType = "7x";
+        multiplier = 7;
       }
+    } else if (chance < winRate + lossRate) {
+      // LOSS: 64-98 = 35%
+      resultType = "loss";
+      multiplier = 0;
+    } else {
+      // NEUTRAL: 99 = 1%
+      resultType = "neutral";
+      multiplier = 0;
     }
 
-    const resultSegment = segments[resultIndex];
-    const multiplier = resultSegment.value;
-    const win = multiplier > 1;
-    const bonus = win ? betAmount * multiplier : 0;
-    const finalMoney = win ? currentMoney + bonus : currentMoney - betAmount;
+    // =========================
+    // BALANCE CALCULATION
+    // =========================
+    let finalMoney;
+    let statusText;
+    let payoutText;
+    let outcomeEmoji;
 
+    if (resultType === "loss") {
+      finalMoney = currentMoney - betAmount;
+
+      statusText = "NO MATCH FOUND";
+      payoutText =
+        `Lost: -${formatMoney(betAmount)}$`;
+      outcomeEmoji = "💀";
+
+    } else if (resultType === "neutral") {
+      // 1% neutral = bet returned
+      finalMoney = currentMoney;
+
+      statusText = "REFUND";
+      payoutText =
+        `Returned: +${formatMoney(betAmount)}$`;
+      outcomeEmoji = "🔄";
+
+    } else {
+      const bonus = betAmount * multiplier;
+
+      finalMoney = currentMoney + bonus;
+
+      statusText = `WIN (${multiplier}X)`;
+      payoutText =
+        `Won: +${formatMoney(bonus)}$`;
+      outcomeEmoji = "🎉";
+    }
+
+    // =========================
+    // SAVE BALANCE
+    // =========================
     userData.money = finalMoney;
+
     await usersData.set(senderID, userData);
 
-    global.wheelLimit[senderID].count++;
+    // Count spin
+    limitData.count++;
 
-    const status = win ? `WIN ${multiplier}x 🎉` : "LOSE 💀";
+    // =========================
+    // RESULT MESSAGE
+    // =========================
+    const msgBody =
+      `🎡 𝗪𝗛𝗘𝗘𝗟 𝗦𝗣𝗜𝗡\n\n` +
+      `${outcomeEmoji} Result: ${statusText}\n` +
+      `💰 ${payoutText}\n` +
+      `💳 Balance: ${formatMoney(finalMoney)}$\n\n` +
+      `🎯 Win Rate: ${winRate}%\n` +
+      `💔 Loss Rate: ${lossRate}%\n` +
+      `🎲 Spins: ${limitData.count}/${maxSpins}\n` +
+      `⏳ Limit resets: 12 hours`;
 
-    const sent = await message.reply("🌀 Spinning the wheel...");
-
-    const W = 600;
-    const H = 600;
-    const centerX = W / 2;
-    const centerY = H / 2;
-    const radius = 240;
-
-    const totalSegments = segments.length;
-    const segmentAngle = (2 * Math.PI) / totalSegments;
-
-    const frames = 50;
-    const encoder = new GIFEncoder(W, H);
-    encoder.setDelay(50);
-    encoder.setRepeat(0);
-    encoder.setQuality(1);
-    encoder.start();
-
-    for (let f = 0; f < frames; f++) {
-      const canvas = Canvas.createCanvas(W, H);
-      const ctx = canvas.getContext("2d");
-
-      ctx.fillStyle = "#0a0a1a";
-      ctx.fillRect(0, 0, W, H);
-
-      for (let i = 0; i < 80; i++) {
-        ctx.beginPath();
-        ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + 0.5, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.4})`;
-        ctx.fill();
-      }
-
-      const progress = f / frames;
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const totalRotation = (2 * Math.PI) * 3;
-      const finalAngle = -Math.PI / 2 - (resultIndex * segmentAngle + segmentAngle / 2);
-      const angle = eased * totalRotation + finalAngle;
-
-      for (let i = 0; i < totalSegments; i++) {
-        const start = i * segmentAngle + angle;
-        const end = start + segmentAngle;
-
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, start, end);
-        ctx.closePath();
-
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "rgba(255,215,0,0.2)";
-        ctx.fillStyle = segments[i].color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "#d4af37";
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        const midAngle = start + segmentAngle / 2;
-        const textX = centerX + Math.cos(midAngle) * (radius * 0.65);
-        const textY = centerY + Math.sin(midAngle) * (radius * 0.65);
-
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = "bold 40px Arial";
-        ctx.fillStyle = "#ffffff";
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "#000000";
-        ctx.fillText(segments[i].label, textX, textY);
-        ctx.shadowBlur = 0;
-      }
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 28, 0, 2 * Math.PI);
-      ctx.shadowBlur = 25;
-      ctx.shadowColor = "#d4af37";
-      ctx.fillStyle = "#d4af37";
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      ctx.fillStyle = "#ff0000";
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = "#ff0000";
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - 24, 22);
-      ctx.lineTo(W / 2 + 24, 22);
-      ctx.lineTo(W / 2, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 14, 0, 2 * Math.PI);
-      ctx.shadowBlur = 40;
-      ctx.shadowColor = "rgba(212,175,55,0.6)";
-      ctx.strokeStyle = "rgba(212,175,55,0.7)";
-      ctx.lineWidth = 6;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      encoder.addFrame(ctx);
-    }
-
-    encoder.finish();
-    const buffer = encoder.out.getData();
-
-    const cacheDir = path.join(__dirname, "cache");
-    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-    const filePath = path.join(cacheDir, `wheel_${Date.now()}.gif`);
-    fs.writeFileSync(filePath, buffer);
-
-    await api.unsendMessage(sent.messageID);
-
-    const msg = `🎡 𝗪𝗛𝗘𝗘𝗟 𝗦𝗣𝗜𝗡
-
-${win ? "🎉" : "💀"} ${status}
-🎯 Result: ${resultSegment.label}
-💰 ${win ? "Won: " + formatMoney(bonus) : "Lost: " + formatMoney(betAmount)}$
-💳 Balance: ${formatMoney(finalMoney)}$
-📊 Usage: ${global.wheelLimit[senderID].count}/${maxSpins}`;
-
-    return api.sendMessage(
-      {
-        body: msg,
-        attachment: fs.createReadStream(filePath)
-      },
-      threadID,
-      () => {
-        if (fs.existsSync(filePath)) {
-          try { fs.unlinkSync(filePath); } catch {}
-        }
-      }
+    // =========================
+    // GIF
+    // =========================
+    const filePath = path.join(
+      cacheDir,
+      `wheel_${Date.now()}_${senderID}.gif`
     );
+
+    api.setMessageReaction(
+      "🌀",
+      event.messageID,
+      () => {},
+      true
+    );
+
+    try {
+      const imageResponse = await axios({
+        url:
+          GIF_URLS[resultType] ||
+          GIF_URLS.loss,
+        method: "GET",
+        responseType: "stream",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+
+      const writer =
+        fs.createWriteStream(filePath);
+
+      imageResponse.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      });
+
+      return api.sendMessage(
+        {
+          body: msgBody,
+          attachment:
+            fs.createReadStream(filePath)
+        },
+        threadID,
+        () => {
+          api.setMessageReaction(
+            resultType === "loss"
+              ? "❌"
+              : "✅",
+            event.messageID,
+            () => {},
+            true
+          );
+
+          if (fs.existsSync(filePath)) {
+            try {
+              fs.unlinkSync(filePath);
+            } catch {}
+          }
+        },
+        event.messageID
+      );
+
+    } catch (e) {
+      console.error(e);
+
+      api.setMessageReaction(
+        resultType === "loss"
+          ? "❌"
+          : "✅",
+        event.messageID,
+        () => {},
+        true
+      );
+
+      return message.reply(msgBody);
+    }
   }
 };

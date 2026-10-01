@@ -1,5 +1,34 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
   config: {
     name: "tiktok",
@@ -9,13 +38,13 @@ module.exports = {
     countDown: 10,
     role: 0,
     shortDescription: "Search and download TikTok videos with reply support",
-    category: "ANIME & MEDIA",
+    category: "MEDIA",
     guide: "{pn} [query] or {pn} [query] -list"
   },
 
   onStart: async function ({ api, event, args }) {
     const { threadID, messageID } = event;
-    const API_URL = "https://xalman-apis.vercel.app/api/tik";
+    const API_URL = `${await getApiBaseUrl()}/api/tik`;
 
     if (args.length === 0) {
       return api.sendMessage("╭─❍\n│ Usage: {pn} [query]\n│ List: {pn} [query] -list\n╰───────────⟡", threadID, messageID);

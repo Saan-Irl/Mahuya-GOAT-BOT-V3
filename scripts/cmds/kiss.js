@@ -7,11 +7,11 @@ module.exports = {
     config: {
         name: "kiss",
         version: "3.5.0",
-        author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-        countDown: 7,
+        author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+        countDown: 5,
         role: 0,
         description: "Kiss someone using mention, reply, or UID",
-        category: "FUN & SOCIAL",
+        category: "LOVE",
         guide: { en: "{p}{n} @mention | Reply to a message | {p}{n} [uid]" }
     },
 

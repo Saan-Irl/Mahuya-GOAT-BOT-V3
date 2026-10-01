@@ -2,14 +2,14 @@ module.exports = {
 	config: {
 		name: "setalias",
 		version: "1.8",
-		author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		countDown: 5,
 		role: 0,
 		description: {
 			vi: "Thêm tên gọi khác cho 1 lệnh bất kỳ trong nhóm của bạn",
 			en: "Add an alias for any command in your group"
 		},
-		category: "config",
+		category: "box chat",
 		guide: {
 			vi: "  Lệnh dùng để thêm/xóa tên gọi khác cho 1 lệnh nào đó để tiện sử dụng trong nhóm chat của bạn"
 				+ "\n   {pn} add <tên gọi khác> <tên lệnh>: dùng để thêm tên gọi khác cho lệnh trong nhóm chat của bạn"

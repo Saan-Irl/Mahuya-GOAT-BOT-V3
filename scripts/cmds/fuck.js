@@ -14,7 +14,7 @@ module.exports = {
   config: {
     name: "fuck",
     version: "3.0",
-    author: "𝗦𝗔𝗔𝗡 𝗘𝗫𝗛𝗔𝗨𝗦𝗧𝗘𝗗",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     role: 0,
     countDown: 5,
     shortDescription: "fuck image effect",

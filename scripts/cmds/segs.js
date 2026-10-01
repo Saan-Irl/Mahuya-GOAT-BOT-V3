@@ -1,13 +1,42 @@
 const axios = require("axios");
+
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
 const fs = require("fs-extra");
 const path = require("path");
 
 module.exports = {
   config: {
     name: "segs",
-    aliases: ["xn", "xnxx"],
-    version: "4.5",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    aliases: ["xnxx"],
+    version: "5.0",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 5,
     role: 2,
     shortDescription: "Search and download videos",
@@ -24,7 +53,7 @@ module.exports = {
     try {
       api.setMessageReaction("⏳", messageID, () => {}, true);
 
-      const res = await axios.get(`https://xalman-apis.vercel.app/api/xnxxsearch?q=${encodeURIComponent(query)}`);
+      const res = await axios.get(`${await getApiBaseUrl()}/api/xnxxsearch?q=${encodeURIComponent(query)}`);
       const results = res.data.results.slice(0, 5);
 
       if (!results || results.length === 0) {
@@ -90,25 +119,67 @@ module.exports = {
     try {
       api.unsendMessage(listMessageID);
       
-      api.setMessageReaction("📥", event.messageID, () => {}, true);
-      
-      const vidRes = await axios.get(videoUrl, { 
+                  api.setMessageReaction("📥", event.messageID, () => {}, true);
+
+      const cacheDir = path.join(__dirname, "cache");
+      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+
+      const tempFilePath = path.join(cacheDir, `${Date.now()}_video.mp4`);
+      const headRes = await axios.head(videoUrl).catch(() => null);
+      if (headRes && headRes.headers['content-length']) {
+        const fileSizeMB = parseInt(headRes.headers['content-length']) / (1024 * 1024);
+        if (fileSizeMB > 80) { 
+          api.setMessageReaction("❌", event.messageID, () => {}, true);
+          return message.reply("❌ | Video file size is too large to send (>80MB).");
+        }
+      }
+
+      const response = await axios({
+        method: "GET",
+        url: videoUrl,
         responseType: "stream",
+        timeout: 200000, 
         headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+          'Accept': '*/*'
         }
       });
-      
+
+      const writer = fs.createWriteStream(tempFilePath);
+      response.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", (err) => {
+          writer.close();
+          reject(err);
+        });
+        response.data.on("error", (err) => {
+          writer.close();
+          reject(err);
+        });
+      });
+
       return api.sendMessage({
         body: `✅ | Title: ${selected.title}`,
-        attachment: vidRes.data
+        attachment: fs.createReadStream(tempFilePath)
       }, event.threadID, (err) => {
-          if (err) return message.reply("❌ | Video file is too large or link expired.");
+
+        if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+
+        if (err) {
+          api.setMessageReaction("❌", event.messageID, () => {}, true);
+          return message.reply("❌ | Failed to send video attachment.");
+        }
+        
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
       }, event.messageID);
 
     } catch (err) {
+      console.error("Stream Download Error:", err);
       api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("❌ | Failed to fetch video file.");
+      return message.reply("❌ | Failed to download or process video stream.");
     }
   }
 };
+        

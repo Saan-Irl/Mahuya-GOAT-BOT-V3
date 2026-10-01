@@ -1,19 +1,67 @@
 const axios = require("axios");
 
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
+
 module.exports = {
   config: {
     name: "coupledp",
     aliases: ["cdp"],
-    version: "4.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
-    description: "Random Matching Couple DP with auto-retry",
-    category: "FUN AND SOCIAL",
-    cooldown: 5
+    version: "5.5",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    description: "Random Matching Couple DP with auto-retry and list system",
+    category: "LOVE",
+    cooldown: 5,
+    guide: {
+      en: "   {pn} - Get a random matching couple DP\n   {pn} list - Show total number of available couple DPs"
+    }
   },
 
-  onStart: async function ({ api, event }) {
-    const { threadID, messageID } = event;
-    const API_URL = "https://xalman-apis.vercel.app/api/cdp";
+  onStart: async function ({ api, event, args }) {
+    const { threadID, messageID, senderID } = event;
+    const API_URL = `${await getApiBaseUrl()}/api/cdp`;
+
+    if (args[0] && args[0].toLowerCase() === "list") {
+      try {
+        const res = await axios.get(`${API_URL}?type=list`, { timeout: 8000 });
+        if (res.data && res.data.status && res.data.total_cdp !== undefined) {
+          const msg = `❖ 𝐓𝐨𝐭𝐚𝐥 𝐂𝐎𝐔𝐏𝐋𝐄 𝐃𝐏 ❖\n━━━━━━━━━━━━━━━━━━\n> ${res.data.total_cdp}`;
+          return api.sendMessage(msg, threadID, messageID);
+        } else {
+          throw new Error("Invalid response from API");
+        }
+      } catch (err) {
+        console.error("Error fetching CDP list:", err.message);
+        return api.sendMessage("❌ Failed to fetch CDP list. Please try again.", threadID, messageID);
+      }
+    }
+
     const MAX_RETRIES = 3;
     let attempt = 0;
     let success = false;

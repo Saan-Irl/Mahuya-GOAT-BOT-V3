@@ -7,11 +7,11 @@ module.exports = {
 	config: {
 		name: "rank",
 		version: "5.5",
-		author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		countDown: 3,
 		role: 0,
 		description: "user balance exp rank card",
-		category: "users",
+		category: "RANK",
 		envConfig: { deltaNext: 5 }
 	},
 
@@ -102,7 +102,7 @@ module.exports = {
 				ctx.fillRect(barX, barY, fillW, barH);
 
 				ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
-				ctx.fillText('Powered by SAAN AHMED ', width / 2, 580);
+				ctx.fillText('Powered by Xalman ', width / 2, 580);
 
 				const cachePath = path.join(__dirname, 'cache', `${userID}_rank.png`);
 				fs.ensureDirSync(path.join(__dirname, 'cache'));

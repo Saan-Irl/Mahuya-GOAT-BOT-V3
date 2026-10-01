@@ -2,7 +2,7 @@ module.exports = {
  config: {
  name: "usage",
  version: "2.1",
- author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+ author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
  description: "📊 Command usage statistics",
  category: "box chat",
  role: 1,

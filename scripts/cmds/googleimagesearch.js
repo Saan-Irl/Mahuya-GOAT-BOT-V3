@@ -1,4 +1,33 @@
 const axios = require("axios");
+
+const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_KEY = "xalman-hub";
+let apiBaseUrl = null;
+let apiConfigRequest = null;
+
+async function getApiBaseUrl() {
+  if (apiBaseUrl) return apiBaseUrl;
+
+  if (!apiConfigRequest) {
+    apiConfigRequest = axios
+      .get(API_CONFIG_URL, { timeout: 15000 })
+      .then(({ data }) => {
+        const baseUrl = data?.[API_KEY];
+
+        if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+          throw new Error(`Missing API key in apis.json: ${API_KEY}`);
+        }
+
+        apiBaseUrl = baseUrl.replace(/\/+$/, "");
+        return apiBaseUrl;
+      })
+      .finally(() => {
+        apiConfigRequest = null;
+      });
+  }
+
+  return apiConfigRequest;
+}
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
@@ -8,12 +37,12 @@ module.exports = {
     name: "googleimagesearch",
     aliases: ["ggimg", "googleimg"],
     version: "4.0",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     countDown: 15,
     role: 0,
     shortDescription: "Premium 21-Image Canvas Grid",
     longDescription: "Search images and get a high-quality 3x7 grid using Canvas.",
-    category: "tools",
+    category: "IMAGE",
     guide: { en: "{p}google <query>" }
   },
 
@@ -24,7 +53,7 @@ module.exports = {
     try {
       const waitMsg = await api.sendMessage(`Creating 21 image grid for "${query}"...`, event.threadID);
 
-      const res = await axios.get(`https://xalman-apis.vercel.app/api/google-image`, {
+      const res = await axios.get(`${await getApiBaseUrl()}/api/google-image`, {
         params: { q: query, count: 21, json: "true" }
       });
 

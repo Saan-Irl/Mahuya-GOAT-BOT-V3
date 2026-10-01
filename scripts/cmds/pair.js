@@ -20,11 +20,11 @@ module.exports = {
   config: {
     name: "pair",
     version: "9.5",
-    author: "𝗦𝗜𝗔𝗠 𝗔𝗛𝗠𝗘𝗗 𝗦𝗔𝗔𝗡",
+    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     role: 0,
-    countDown: 7,
+    countDown: 5,
     shortDescription: "Romantic pair system with random background",
-    category: "FUN & SOCIAL"
+    category: "LOVE"
   },
 
   onStart: async function ({ api, event, usersData, args }) {
