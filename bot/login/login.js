@@ -98,7 +98,7 @@ for (const text of title) {
         const textColor = gradient("#00b4db", "#0083b0")(text);
         centerText(textColor, text.length);
 }
-let subTitle = `X69X BOT V3@${currentVersion} - Made by Azadx69x`;
+let subTitle = `SAAN GOAT BOT V3@${currentVersion} - Made by 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍`;
 const subTitleArray = [];
 if (subTitle.length > maxWidth) {
         while (subTitle.length > maxWidth) {
@@ -112,8 +112,8 @@ if (subTitle.length > maxWidth) {
 else {
         subTitleArray.push(subTitle);
 }
-const author = ("Made by Azadx69x but modify siyuuuu");
-const srcUrl = ("Source code: https://github.com/ncazad/X69X-BOT-V3");
+const author = ("Made by 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍");
+const srcUrl = ("Source code: https://github.com/Saan-Irl/Mahuya-GOAT-BOT-V3");
 const fakeRelease = ("ALL VERSIONS NOT RELEASED HERE ARE FAKE");
 
 // Apply beautiful colors to all text
@@ -651,20 +651,6 @@ async function startBot(loginWithEmail) {
         const currentVersion = require("../../package.json").version;
         
         // Fix version check with error handling
-        let tooOldVersion = "0.0.0";
-        try {
-                const response = await axiosInstance.get("https://raw.githubusercontent.com/ncazad/X69X-BOT-V3-Storage-/main/tooOldVersions.txt", {
-                        timeout: 10000
-                });
-                tooOldVersion = response.data || "0.0.0";
-        } catch (error) {
-                console.warn("Cannot get latest version info:", error.message);
-        }
-        
-        if ([-1, 0].includes(compareVersion(currentVersion, tooOldVersion))) {
-                log.err("VERSION", getText('version', 'tooOldVersion', colors.yellowBright('node update')));
-                process.exit();
-        }
 
         if (global.GoatBot.Listening)
                 await stopListening();
@@ -764,8 +750,8 @@ async function startBot(loginWithEmail) {
                         
                         log.info("PREFIX", global.GoatBot.config.prefix);
                         log.info("LANGUAGE", global.GoatBot.config.language);
-                        log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "X69X BOT V3");
-                        log.info("MAINTAINER", "NTKhang  | Azadx69x");
+                        log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "SAAN GOAT BOT V3");
+                        log.info("MAINTAINER", "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍");
                         
                         // GBAN check with error handling
                         let dataGban = {};
@@ -1126,7 +1112,7 @@ async function startBot(loginWithEmail) {
                         log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
                         logColor("#f5ab00", createLine("COPYRIGHT"));
                         
-                        console.log(`\x1b[1m\x1b[33m${("COPYRIGHT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("Project X69X BOT V3  by Azadx69x (https://github.com/ncazad),Please do not sell this source code or claim it as your own. Thank you!")}\x1b[0m`);
+                        console.log(`\x1b[1m\x1b[33m${("COPYRIGHT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("SAAN GOAT BOT V3 by 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍")}\x1b[0m`);
                         logColor("#f5ab00", character);
                         
                         global.GoatBot.config.adminBot = adminBot;

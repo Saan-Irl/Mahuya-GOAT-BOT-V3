@@ -88,7 +88,7 @@ module.exports = async (api) => {
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(cookieParser());
         const sessionSecret = process.env.SESSION_SECRET
-                || (config.dashBoard?.adminKey ? config.dashBoard.adminKey + "_x69x_session_v3" : null)
+                || (config.dashBoard?.adminKey ? config.dashBoard.adminKey + "_saan_session_v3" : null)
                 || randomStringApikey(32);
         app.use(session({
                 secret: sessionSecret,
@@ -196,7 +196,7 @@ module.exports = async (api) => {
         app.get(["/health", "/ping", "/alive"], (req, res) => {
                 res.status(200).json({
                         status: "ok",
-                        bot: global.GoatBot?.config?.nameBot || "X69X BOT V3",
+                        bot: global.GoatBot?.config?.nameBot || "SAAN GOAT BOT V3",
                         uptime: Math.floor(process.uptime()),
                         timestamp: new Date().toISOString()
                 });
@@ -247,7 +247,7 @@ module.exports = async (api) => {
                         botID,
                         prefix: cfg.prefix || ")",
                         language: cfg.language || "en",
-                        nameBot: cfg.nameBot || "X69X BOT V3",
+                        nameBot: cfg.nameBot || "SAAN GOAT BOT V3",
                         dbType,
                         nodeVersion: process.version
                 });

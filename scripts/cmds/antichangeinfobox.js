@@ -4,7 +4,7 @@ module.exports = {
 	config: {
 		name: "antichangeinfobox",
 		version: "1.9",
-		author: "NTKhang",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		countDown: 5,
 		role: 0,
 		description: {

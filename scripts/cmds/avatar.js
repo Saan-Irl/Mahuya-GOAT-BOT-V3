@@ -4,7 +4,7 @@ const { getStreamFromURL } = global.utils;
 module.exports = {
 	config: {
 		name: "avatar",
-		author: "NTKhang",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		version: "1.6",
 		cooldowns: 5,
 		role: 0,

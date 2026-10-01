@@ -1,7 +1,7 @@
 {
   "name": "goat-bot-v3",
   "version": "3.0.1",
-  "description": "A simple Bot chat messenger using personal account. Made by NTKhang fixed by xalman",
+  "description": "SAAN GOAT BOT V3 - Messenger Bot",
   "main": "index.js",
   "engines": {
     "node": "22.x",

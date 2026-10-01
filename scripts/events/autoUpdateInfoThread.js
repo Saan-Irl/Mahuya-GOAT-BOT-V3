@@ -2,7 +2,7 @@ module.exports = {
 	config: {
 		name: "autoUpdateThreadInfo",
 		version: "1.4",
-		author: "NTKhang",
+		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
 		category: "events"
 	},
 

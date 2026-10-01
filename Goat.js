@@ -241,7 +241,7 @@ if (config.autoRestart) {
 			"newVersionDetected",
 			colors.gray(currentVersion),
 			colors.hex("#eb6a07", version),
-			colors.hex("#eb6a07", "node update")
+			colors.hex("#eb6a07", "automatic update disabled")
 		));
 
 	const parentIdGoogleDrive = await utils.drive.checkAndCreateParentFolder("GoatBot");
