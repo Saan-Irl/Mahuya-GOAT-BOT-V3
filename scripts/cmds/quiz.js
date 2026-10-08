@@ -56,34 +56,26 @@ module.exports = {
   config: {
     name: "quiz",
     aliases: ["qz"],
-    version: "8.0",
+    version: "9.0",
     author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
-    countDown: 10,
+    countDown: 12,
     role: 0,
     description: "Play a random quiz with elegant design and automatic clean-up",
     category: "GAMES",
-    guide:
-      "{pn} : random bangla quiz\n" +
-      "{pn} bn / bangla : bangla quiz\n" +
-      "{pn} en / english : english quiz\n" +
-      "{pn} math : math quiz\n" +
-      "{pn} list : total questions (all categories)\n" +
-      "{pn} list <category> : total questions in a category"
+    guide: "{pn} : random bangla quiz\n{pn} bn / bangla : bangla quiz\n{pn} en / english : english quiz\n{pn} math : math quiz\n{pn} list : total questions (all categories)\n{pn} list <category> : total questions in a category"
   },
 
   onStart: async function ({ event, message, args, api }) {
     const { senderID } = event;
     const BASE_URL = `${await getApiBaseUrl()}/api/quiz`;
 
-    // QUIZ DATABASE LIST
     if (args[0] === "list" || args[0] === "total") {
       const rawCategory = args[1];
       const category = normalizeCategory(rawCategory);
 
       if (rawCategory && !category) {
         return message.reply(
-          `❌ Invalid category: "${rawCategory}"\n` +
-          `Valid: bn, en, math`
+          `❌ Invalid category: "${rawCategory}"\n✅ Valid categories: bn/bangla, en/english, math`
         );
       }
 
@@ -99,41 +91,35 @@ module.exports = {
 
         if (data.by_category) {
           listMsg =
-            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦\n` +
-            `━━━━━━━━━━━━━━\n` +
-            `📝 Total : ${data.total_questions}\n` +
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📝 Total Questions : ${data.total_questions}\n` +
             `🇧🇩 Bangla : ${data.by_category.bn}\n` +
             `🇬🇧 English : ${data.by_category.en}\n` +
             `🧮 Math : ${data.by_category.math}\n` +
-            `🟢 Status : Active`;
+            `👤 Database Author : 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃\n` +
+            `🟢 System Status   : Active\n━━━━━━━━━━━━━━━━━━━━━━`;
         } else {
           listMsg =
-            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦 (${data.category})\n` +
-            `━━━━━━━━━━━━━━\n` +
-            `📝 Total : ${data.total_questions}\n` +
-            `🟢 Status : Active`;
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦 (${data.category})\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📝 Total Questions : ${data.total_questions}\n` +
+            `👤 Database Author : 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃\n` +
+            `🟢 System Status   : Active\n━━━━━━━━━━━━━━━━━━━━━━`;
         }
 
         return message.reply(listMsg);
+
       } catch (e) {
-        return message.reply(
-          "❌ Unable to fetch quiz database information."
-        );
+        return message.reply("❌ Unable to fetch quiz database information.");
       }
     }
 
-    // CATEGORY
     const rawCategory = args[0];
     const requestedCategory = normalizeCategory(rawCategory);
 
     if (rawCategory && !requestedCategory) {
       return message.reply(
-        `❌ Invalid category: "${rawCategory}"\n` +
-        `Valid: bn, en, math\n\n` +
-        `Usage:\n${this.config.guide.replace(
-          /{pn}/g,
-          this.config.name
-        )}`
+        `❌ Invalid category: "${rawCategory}"\n✅ Valid categories: bn/bangla, en/english, math\n\n` +
+        `Usage:\n${this.config.guide.replace(/{pn}/g, this.config.name)}`
       );
     }
 
@@ -152,20 +138,20 @@ module.exports = {
       const categoryLabel =
         CATEGORY_LABELS[quiz.category] || quiz.category;
 
-      const labels = ["A", "B", "C", "D"];
+      const labels = ["𝗔", "𝗕", "𝗖", "𝗗"];
 
-      const optionsText = quiz.options
-        .map((opt, index) => `〔${labels[index]}〕 ${opt}`)
-        .join("\n");
+      let optionsText = "";
 
-      // COMPACT PREMIUM QUIZ
+      quiz.options.forEach((opt, index) => {
+        optionsText += `◈ [ ${labels[index]} ]  ${opt}\n`;
+      });
+
       const msgText =
-        `🧠 𝗤𝗨𝗜𝗭 𝗖𝗛𝗔𝗟𝗟𝗘𝗡𝗚𝗘 • ${categoryLabel}\n` +
-        `╭──────────────╮\n` +
-        `❓ ${quiz.question}\n` +
-        `╰──────────────╯\n\n` +
-        `${optionsText}\n\n` +
-        `⏳ Reply with A, B, C or D • 60s`;
+        `╭─「 ⚡ 𝗤𝗨𝗜𝗭 𝗧𝗜𝗠𝗘 ${categoryLabel} 」─╮\n\n` +
+        `❔ 𝗤𝗨𝗘𝗦𝗧\n${quiz.question}\n\n` +
+        `${optionsText}\n` +
+        `⏱️ 𝟲𝟬𝘀  ┃ 𝗥𝗘𝗣𝗟𝗬 ➜ A / B / C / D\n` +
+        `╰────────────────────╯`;
 
       return message.reply(msgText, (err, info) => {
         if (err) return;
@@ -196,7 +182,9 @@ module.exports = {
   onReply: async function ({ event, Reply, message, usersData, api }) {
     const { senderID, body } = event;
 
-    if (senderID !== Reply.author) return;
+    if (senderID !== Reply.author) {
+      return;
+    }
 
     const userAnswer = body.trim().toUpperCase();
     const validOptions = ["A", "B", "C", "D"];
@@ -209,7 +197,8 @@ module.exports = {
       let resultMsg = "";
 
       if (userAnswer === Reply.correctAnswer) {
-        const reward = 2000;
+        const reward = 5000;
+
         const userData = await usersData.get(senderID);
         const currentMoney = parseInt(userData.money || 0);
 
@@ -218,27 +207,28 @@ module.exports = {
         });
 
         resultMsg =
-          `🎉 𝗖𝗢𝗥𝗥𝗘𝗖𝗧!\n` +
-          `╭──────────────╮\n` +
-          `✅ Choice: ${userAnswer}\n` +
-          `📖 ${Reply.correctText}\n` +
-          `💰 +${reward.toLocaleString()} ৳\n` +
-          `╰──────────────╯`;
+          `🎉 𝗖𝗢𝗥𝗥𝗘𝗖𝗧 𝗔𝗡𝗦𝗪𝗘𝗥!\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `✅ You chose [ ${userAnswer} ].\n\n` +
+          `📖 Explanation:\n${Reply.correctText}\n\n` +
+          `💰 Reward: +${reward.toLocaleString()} ৳`;
+
       } else {
         resultMsg =
-          `😞 𝗪𝗥𝗢𝗡𝗚!\n` +
-          `╭──────────────╮\n` +
-          `❌ Choice: ${userAnswer}\n` +
-          `✅ Answer: ${Reply.correctAnswer}\n` +
-          `📖 ${Reply.correctText}\n` +
-          `╰──────────────╯`;
+          `😞 𝗪𝗥𝗢𝗡𝗚 𝗔𝗡𝗦𝗪𝗘𝗥!\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `❌ Your choice was [ ${userAnswer} ].\n\n` +
+          `📖 The correct answer is:\n` +
+          `[ ${Reply.correctAnswer} ] : ${Reply.correctText}`;
       }
 
       message.reply(resultMsg);
+
       global.GoatBot.onReply.delete(Reply.messageID);
 
     } catch (e) {
       console.error(e);
+
       return message.reply(
         "❌ An unexpected error occurred while processing your answer."
       );
