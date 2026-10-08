@@ -29,11 +29,20 @@ async function getApiBaseUrl() {
   return apiConfigRequest;
 }
 
+const toBoldNum = (str) =>
+  String(str).replace(/[0-9]/g, (c) => {
+    const map = {
+      "0": "𝟬", "1": "𝟭", "2": "𝟮", "3": "𝟯", "4": "𝟰",
+      "5": "𝟱", "6": "𝟲", "7": "𝟳", "8": "𝟴", "9": "𝟵"
+    };
+    return map[c] || c;
+  });
+
 module.exports = {
   config: {
     name: "smsbomber",
     aliases: ["smb", "bomb"],
-    version: "3.0",
+    version: "3.5",
     author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     role: 0,
     countDown: 5,
@@ -44,7 +53,7 @@ module.exports = {
   },
 
   onStart: async function ({ api, event, args, message }) {
-    const { threadID, messageID } = event;
+    const { messageID } = event;
     const API_URL = `${await getApiBaseUrl()}/api/bomb`;
 
     const phone = args[0];
@@ -63,15 +72,13 @@ module.exports = {
         api.setMessageReaction("✅", messageID, () => {}, true);
 
         const data = res.data;
-        const msg = `🚀 𝗦𝗠𝗦 𝗕𝗢𝗠𝗕𝗘𝗥 𝗕𝗗
-━━━━━━━━━━━━━━━━━━━━━━
-📱 Target: ${data.target || phone}
-⚡ Mode: ${data.mode || "HIGH"}
-📊 Total Requests: ${data.total_requests || 0}
-🌀 Total APIs: ${data.total_apis || 0}
-🔄 Rounds: ${data.total_rounds || 1}
-💬 Status: ${data.message || "Attack started successfully!"}
-━━━━━━━━━━━━━━━━━━━━━━`;
+
+        const msg =
+          `┌─[ 🚀 𝙎𝙈𝙎_𝘽𝙊𝙈𝘽𝙀𝙍 ]\n` +
+          `│ 🎯 𝙏𝘼𝙍𝙂𝙀𝙏 : ${toBoldNum(data.target || phone)}\n` +
+          `│ ⚡ 𝙈𝙊𝘿𝙀   : 𝙐𝙇𝙏𝙍𝘼_𝙁𝘼𝙎𝙏\n` +
+          `│ 🔄 𝙍𝙊𝙐𝙉𝘿𝙎 : ${toBoldNum(data.total_rounds || count)}\n` +
+          `└─[ ✅ 𝙎𝙏𝘼𝙏𝙐𝙎 : 𝙎𝙏𝘼𝙍𝙏𝙀𝘿 ]`;
 
         return message.reply(msg);
       } else {
@@ -80,7 +87,15 @@ module.exports = {
 
     } catch (error) {
       api.setMessageReaction("❌", messageID, () => {}, true);
-      return message.reply("❌ Bombing failed or API error!");
+
+      const failMsg =
+        `┌─[ 🚀 𝙎𝙈𝙎_𝘽𝙊𝙈𝘽𝙀𝙍 ]\n` +
+        `│ 🎯 𝙏𝘼𝙍𝙂𝙀𝙏 : ${toBoldNum(phone)}\n` +
+        `│ ⚡ 𝙈𝙊𝘿𝙀   : 𝙐𝙇𝙏𝙍𝘼_𝙁𝘼𝙎𝙏\n` +
+        `│ 🔄 𝙍𝙊𝙐𝙉𝘿𝙎 : ${toBoldNum(count)}\n` +
+        `└─[ ❌ 𝙎𝙏𝘼𝙏𝙐𝙎 : 𝙁𝘼𝙄𝙇𝙀𝘿 ]`;
+
+      return message.reply(failMsg);
     }
   }
 };
