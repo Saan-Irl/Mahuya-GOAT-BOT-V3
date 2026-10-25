@@ -1,18 +1,18 @@
 const axios = require("axios");
 
-const REPO_OWNER = "Fineshyt-Saan";
-const REPO_NAME = "SAAN-GOATBOT-V3-UPDATED";
+const REPO_OWNER = "Saan-Irl";
+const REPO_NAME = "Enyo";
 const REPO_LINK = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
 const REPO_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
 
 module.exports = {
   config: {
     name: "fork",
-    version: "4.5",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    version: "5.0",
+    author: "𝐒𝐢𝐚𝐦 𝐀𝐡𝐦𝐞𝐝 𝐒𝐚𝐚𝐧",
     countDown: 5,
     role: 0,
-    shortDescription: "Show github repository link",
+    shortDescription: "Premium GitHub Repository",
     category: "utility",
     guide: {
       en: "{p}fork"
@@ -21,18 +21,31 @@ module.exports = {
 
   langs: {
     en: {
-      current: `🐐 𝗦𝗔𝗔𝗡-𝗚𝗢𝗔𝗧𝗕𝗢𝗧-𝗩𝟯-𝗨𝗣𝗗𝗔𝗧𝗘𝗗
-━━━━━━━━━━━━━━━━━━━━
-⭐ ▰▰▰▰▰▰▰▱▱▱  %2 Stars
-🍴 ▰▰▰▰▰▰▰▰▰▱  %3 Forks
-━━━━━━━━━━━━━━━━━━━━
-🔗 %1
-👑 Maintained by 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍`
+      current:
+`╭━━━〔 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃 〕━━━╮
+┃
+┃  ✦ 𝐆𝐈𝐓𝐇𝐔𝐁 𝐑𝐄𝐏𝐎𝐒𝐈𝐓𝐎𝐑𝐘
+┃
+┃  ❖ 𝐑𝐄𝐏𝐎  : 𝐄𝐧𝐲𝐨
+┃  ⭐ 𝐒𝐓𝐀𝐑𝐒 : %2
+┃  🍴 𝐅𝐎𝐑𝐊𝐒 : %3
+┃
+┃  ⌁ 𝐑𝐄𝐏𝐎 𝐋𝐈𝐍𝐊
+┃  %1
+┃
+┣━━━━━━━━━━━━━━━━━━━━━━
+┃  ♛ 𝐃𝐄𝐕𝐄𝐋𝐎𝐏𝐄𝐑
+┃
+┃  𝐒𝐢𝐚𝐦 𝐀𝐡𝐦𝐞𝐝 𝐒𝐚𝐚𝐧
+┃  𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃
+┃
+╰━━━━━━━━━━━━━━━━━━━━━━╯`
     }
   },
 
   onStart: async function ({ message, getLang }) {
     const { stars, forks } = await getRepoStats();
+
     return message.reply(
       getLang("current", REPO_LINK, stars, forks)
     );
@@ -41,7 +54,7 @@ module.exports = {
   onChat: async function ({ message, getLang, event }) {
     if (
       event.body &&
-      event.body.toLowerCase().trim() === "fork"
+      event.body.trim().toLowerCase() === "fork"
     ) {
       const { stars, forks } = await getRepoStats();
 
@@ -57,8 +70,7 @@ async function getRepoStats() {
     const { data } = await axios.get(REPO_API, {
       timeout: 10000,
       headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "SAAN-GOATBOT-V3"
+        Accept: "application/vnd.github+json"
       }
     });
 

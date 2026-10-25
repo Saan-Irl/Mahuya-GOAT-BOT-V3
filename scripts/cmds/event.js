@@ -118,7 +118,7 @@ module.exports = {
 	config: {
 		name: "event",
 		version: "3.0",
-		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+		author: "Saan",
 		countDown: 5,
 		role: 2,
 		description: { en: "Manage event command listener modules" },

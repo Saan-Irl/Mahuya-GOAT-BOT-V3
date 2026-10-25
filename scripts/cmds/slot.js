@@ -1,10 +1,10 @@
 module.exports = {
   config: {
     name: "slot",
-    version: "8.2",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    version: "9.0",
+    author: "Saan",
     role: 0,
-    countDown: 10,
+    countDown: 8,
     category: "GAMES",
     guide: {
       en: "{pn} <amount>"
@@ -17,8 +17,8 @@ module.exports = {
     const formatMoney = (num) => {
       const n = Number(num);
 
-      if (n === Infinity || isNaN(n)) return "∞";
-      if (n < 1000) return n.toFixed(0);
+      if (!Number.isFinite(n)) return "∞";
+      if (Math.abs(n) < 1000) return n.toLocaleString("en-US");
 
       const units = [
         { v: 1e12, s: "T" },
@@ -28,219 +28,181 @@ module.exports = {
       ];
 
       for (const u of units) {
-        if (n >= u.v) {
-          return (
-            (n / u.v)
-              .toFixed(2)
-              .replace(/\.00$/, "")
-              .replace(/(\.\d)0$/, "$1") +
-            u.s
-          );
+        if (Math.abs(n) >= u.v) {
+          return (n / u.v)
+            .toFixed(2)
+            .replace(/\.00$/, "")
+            .replace(/(\.\d)0$/, "$1") + u.s;
         }
       }
 
-      return n.toLocaleString();
+      return n.toLocaleString("en-US");
     };
 
     function parseAmount(input) {
       if (!input) return NaN;
 
-      const a = input.toLowerCase().trim();
+      const value = input.toLowerCase().replace(/,/g, "").trim();
+      const match = value.match(/^(\d+(?:\.\d+)?)(k|m|b|t)?$/);
 
-      if (a.endsWith("k")) return parseFloat(a) * 1e3;
-      if (a.endsWith("m")) return parseFloat(a) * 1e6;
-      if (a.endsWith("b")) return parseFloat(a) * 1e9;
-      if (a.endsWith("t")) return parseFloat(a) * 1e12;
+      if (!match) return NaN;
 
-      return parseInt(a);
+      const number = Number(match[1]);
+      const suffix = match[2];
+
+      const multipliers = {
+        k: 1e3,
+        m: 1e6,
+        b: 1e9,
+        t: 1e12
+      };
+
+      return number * (multipliers[suffix] || 1);
     }
 
     const betAmount = parseAmount(args[0]);
-
     const minBet = 100;
-    const maxBet = 500000000000;
-    const winRate = 60;
+    const maxBet = 500e9;
 
-    // BET VALIDATION
-    if (isNaN(betAmount) || betAmount < minBet) {
+    if (!Number.isFinite(betAmount) || betAmount < minBet) {
       return message.reply(
-        `⚠️ Minimum bet: ${formatMoney(minBet)}$\n` +
-        `Example: /slot 1k`
+        `╭━━━〔 🎰 𝐇𝐄𝐀𝐑𝐓 𝐒𝐋𝐎𝐓 〕━━━╮\n` +
+        `┃ 💰 Minimum Bet: 100$\n` +
+        `┃ 🎯 Example: /slot 1k\n` +
+        `╰━━━━━━━━━━━━━━━━━━━━╯`
       );
     }
 
     if (betAmount > maxBet) {
       return message.reply(
-        `🚫 Maximum bet: ${formatMoney(maxBet)}$`
+        `🚫 Maximum Bet: ${formatMoney(maxBet)}$`
       );
     }
 
-    // USER DATA
-    let userData = await usersData.get(senderID);
+    const userData = await usersData.get(senderID);
 
     if (!userData) {
-      userData = { money: 0 };
+      return message.reply("⚠️ User data not found. Please try again.");
     }
 
     const currentMoney = Number(userData.money || 0);
 
-    if (betAmount > currentMoney) {
+    if (!Number.isFinite(currentMoney) || currentMoney < betAmount) {
       return message.reply(
-        `💸 Insufficient funds!\n` +
-        `💳 Balance: ${formatMoney(currentMoney)}$`
+        `╭━━━〔 💸 𝐋𝐎𝐖 𝐁𝐀𝐋𝐀𝐍𝐂𝐄 〕━━━╮\n` +
+        `┃ 💳 Balance: ${formatMoney(currentMoney)}$\n` +
+        `┃ 🎯 Bet: ${formatMoney(betAmount)}$\n` +
+        `╰━━━━━━━━━━━━━━━━━━━━━━╯`
       );
     }
 
-    // SPIN LIMIT
     if (!global.slotLimit) {
       global.slotLimit = {};
     }
 
     const now = Date.now();
+    const resetDuration = 12 * 60 * 60 * 1000;
+    let slotData = global.slotLimit[senderID];
 
-    if (
-      !global.slotLimit[senderID] ||
-      now - global.slotLimit[senderID].lastReset > 3600000
-    ) {
-      global.slotLimit[senderID] = {
+    if (!slotData || now - slotData.lastReset >= resetDuration) {
+      slotData = {
         count: 0,
         lastReset: now
       };
+
+      global.slotLimit[senderID] = slotData;
     }
 
     const maxSpins = 15;
 
-    if (global.slotLimit[senderID].count >= maxSpins) {
+    if (slotData.count >= maxSpins) {
       return message.reply(
-        `🚫 Spin quota exhausted (${maxSpins}/${maxSpins})`
+        `╭━━━〔 🎰 𝐇𝐄𝐀𝐑𝐓 𝐒𝐋𝐎𝐓 〕━━━╮\n` +
+        `┃ ❌ All 15 plays have been used.\n` +
+        `┃ ⏳ Please try again later.\n` +
+        `╰━━━━━━━━━━━━━━━━━━━━╯`
       );
     }
 
-    // SLOT SYMBOLS
-    const hearts = [
-      "❤️",
-      "💙",
-      "💚",
-      "💛",
-      "💜",
-      "🧡",
-      "🖤",
-      "🤍"
-    ];
+    const hearts = ["❤️", "💙", "💚", "💛", "💜", "🧡", "🖤", "🤍"];
 
-    let s = [];
+    // 65% winning chance.
+    const isWinSpin = Math.random() * 100 < 65;
 
-    // 60% WIN RATE
-    const rollChance = Math.floor(Math.random() * 100);
-    const isWinSpin = rollChance < winRate;
-
-    let matchCount = 0;
-
-    if (isWinSpin) {
-      const winTypeRoll = Math.floor(Math.random() * 100);
-
-      // Win distribution
-      if (winTypeRoll < 10) {
-        matchCount = 4;
-      } else if (winTypeRoll < 40) {
-        matchCount = 3;
-      } else {
-        matchCount = 2;
-      }
-
-      const chosenHeart =
-        hearts[Math.floor(Math.random() * hearts.length)];
-
-      s = Array(4).fill(null);
-
-      // Matching symbols
-      for (let i = 0; i < matchCount; i++) {
-        s[i] = chosenHeart;
-      }
-
-      // Different symbols
-      for (let i = matchCount; i < 4; i++) {
-        let randomHeart;
-
-        do {
-          randomHeart =
-            hearts[Math.floor(Math.random() * hearts.length)];
-        } while (
-          randomHeart === chosenHeart &&
-          matchCount < 4
-        );
-
-        s[i] = randomHeart;
-      }
-
-      // Shuffle result
-      s.sort(() => Math.random() - 0.5);
-
-    } else {
-      // Guaranteed no matching pair
-      const shuffled = [...hearts].sort(
-        () => Math.random() - 0.5
-      );
-
-      s = shuffled.slice(0, 4);
-    }
-
-    // COUNT SPIN
-    global.slotLimit[senderID].count++;
-
-    // CHECK MATCH
-    const counts = {};
-
-    s.forEach((item) => {
-      counts[item] = (counts[item] || 0) + 1;
-    });
-
-    const maxMatch = Math.max(
-      ...Object.values(counts)
-    );
-
-    const win = maxMatch >= 2;
-
-    // MULTIPLIER
+    let reels = [];
     let multiplier = 0;
 
-    if (maxMatch === 4) {
-      multiplier = 5;
-    } else if (maxMatch === 3) {
-      multiplier = 3;
-    } else if (maxMatch === 2) {
-      multiplier = 1.5;
+    if (isWinSpin) {
+      const roll = Math.random() * 100;
+
+      if (roll < 10) multiplier = 5;
+      else if (roll < 40) multiplier = 3;
+      else multiplier = 1.5;
+
+      const matchCount = multiplier === 5 ? 4 : multiplier === 3 ? 3 : 2;
+      const chosenHeart = hearts[Math.floor(Math.random() * hearts.length)];
+
+      reels = Array(4).fill(null);
+
+      for (let i = 0; i < matchCount; i++) {
+        reels[i] = chosenHeart;
+      }
+
+      const otherHearts = hearts.filter(heart => heart !== chosenHeart);
+
+      for (let i = matchCount; i < 4; i++) {
+        reels[i] = otherHearts[Math.floor(Math.random() * otherHearts.length)];
+      }
+
+      // Shuffle without changing the number of matches.
+      for (let i = reels.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [reels[i], reels[j]] = [reels[j], reels[i]];
+      }
+    } else {
+      // Ensure no matching hearts on a losing spin.
+      reels = [...hearts]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 4);
     }
 
-    // MONEY CALCULATION
-    const winAmount = win
-      ? betAmount * multiplier
-      : 0;
-
+    const win = isWinSpin;
+    const winAmount = win ? betAmount * multiplier : 0;
     const finalMoney = win
       ? currentMoney - betAmount + winAmount
       : currentMoney - betAmount;
 
-    userData.money = finalMoney;
+    const netProfit = win
+      ? winAmount - betAmount
+      : -betAmount;
 
+    userData.money = finalMoney;
     await usersData.set(senderID, userData);
 
-    // PREMIUM RESULT
+    slotData.count++;
+
+    const statusText = win
+      ? `𝐉𝐀𝐂𝐊𝐏𝐎𝐓 ${multiplier}𝐗 ✨`
+      : "𝐍𝐎 𝐌𝐀𝐓𝐂𝐇 💔";
+
+    const payoutText = win
+      ? `💰 Reward: +${formatMoney(winAmount)}$\n💎 Profit: ${netProfit >= 0 ? "+" : "-"}${formatMoney(Math.abs(netProfit))}$`
+      : `💸 Loss: -${formatMoney(betAmount)}$`;
+
     const resultMessage =
-      `🎰 𝗦𝗟𝗢𝗧 𝗠𝗔𝗖𝗛𝗜𝗡𝗘\n` +
-      `╭──────────────╮\n` +
-      `│  ${s[0]}  ${s[1]}  ${s[2]}  ${s[3]}  │\n` +
-      `╰──────────────╯\n` +
-      (
-        win
-          ? `🏆 𝗪𝗜𝗡𝗡𝗘𝗥 • ${multiplier}X\n` +
-            `💰 Won: +${formatMoney(winAmount)}$`
-          : `💔 𝗡𝗢 𝗠𝗔𝗧𝗖𝗛\n` +
-            `💸 Lost: -${formatMoney(betAmount)}$`
-      ) +
-      `\n💳 Balance: ${formatMoney(finalMoney)}$` +
-      `\n🎯 Win Rate: ${winRate}%` +
-      `\n🎲 Spins: ${global.slotLimit[senderID].count}/${maxSpins}`;
+      `╭━━━〔 💎 𝐇𝐄𝐀𝐑𝐓 𝐒𝐋𝐎𝐓 〕━━━╮\n` +
+      `┃\n` +
+      `┃   ${reels[0]}  │  ${reels[1]}  │  ${reels[2]}  │  ${reels[3]}\n` +
+      `┃\n` +
+      `┣━━━━━━━━━━━━━━━━━━━━━\n` +
+      `┃ ${win ? "🎉" : "💔"} Result: ${statusText}\n` +
+      `┃\n` +
+      `┃ ${payoutText.replace(/\n/g, "\n┃ ")}\n` +
+      `┃ 💳 Balance: ${formatMoney(finalMoney)}$\n` +
+      `┃ 🎮 Plays: ${slotData.count}/${maxSpins}\n` +
+      `┃\n` +
+      `╰━━━〔 𝐒𝐀𝐀𝐍 〕━━━╯\n` +
+      `〲 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃 〲`;
 
     return message.reply(resultMessage);
   }

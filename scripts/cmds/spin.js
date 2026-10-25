@@ -10,265 +10,248 @@ const GIF_URLS = {
   "4x": "https://i.imgur.com/RGDTCQ8.gif"
 };
 
-const parseAmount = (input) => {
-  if (!input) return NaN;
-
-  input = input.toString().toLowerCase().replace(/,/g, "").trim();
-
-  const suffixes = {
-    k: 1e3,
-    m: 1e6,
-    b: 1e9,
-    t: 1e12
-  };
-
-  const lastChar = input.slice(-1);
-
-  if (suffixes[lastChar]) {
-    const number = parseFloat(input.slice(0, -1));
-    return isNaN(number) ? NaN : number * suffixes[lastChar];
-  }
-
-  return parseFloat(input);
-};
-
-const formatMoney = (amount) => {
-  amount = Math.floor(amount);
-
-  if (amount >= 1e12)
-    return (amount / 1e12).toFixed(2).replace(/\.00$/, "") + "T";
-
-  if (amount >= 1e9)
-    return (amount / 1e9).toFixed(2).replace(/\.00$/, "") + "B";
-
-  if (amount >= 1e6)
-    return (amount / 1e6).toFixed(2).replace(/\.00$/, "") + "M";
-
-  if (amount >= 1e3)
-    return (amount / 1e3).toFixed(2).replace(/\.00$/, "") + "K";
-
-  return amount.toLocaleString();
-};
-
 module.exports = {
   config: {
     name: "spin",
-    version: "7.1",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
-    countDown: 16,
+    version: "3.0",
+    author: "Saan",
     role: 0,
-    shortDescription: "Spin the wheel",
-    category: "games",
-    guide: "{pn} <amount>"
+    countDown: 16,
+    category: "GAMES",
+    guide: {
+      en: "{pn} <amount>"
+    }
   },
 
-  onStart: async function ({ api, event, args, usersData }) {
-    const senderID = event.senderID;
+  onStart: async ({ message, event, args, usersData, api }) => {
+    const { senderID, threadID } = event;
+    const cacheDir = path.join(__dirname, "cache");
 
-    const minBet = 100;
-    const maxBet = 1000000000000; // 1T
-    const winRate = 63;
+    await fs.ensureDir(cacheDir);
 
-    const maxSpins = 12; // 12 spins
-    const spinResetTime = 12 * 60 * 60 * 1000; // 12 hours
+    const formatMoney = (num) => {
+      const n = Number(num);
 
-    if (!global.spinLimit)
-      global.spinLimit = {};
+      if (!Number.isFinite(n)) return "∞";
+      if (n < 1000) return n.toLocaleString("en-US");
 
-    if (!global.spinLimit[senderID]) {
-      global.spinLimit[senderID] = {
-        count: 0,
-        resetAt: Date.now() + spinResetTime
+      const units = [
+        { v: 1e12, s: "T" },
+        { v: 1e9, s: "B" },
+        { v: 1e6, s: "M" },
+        { v: 1e3, s: "K" }
+      ];
+
+      for (const u of units) {
+        if (n >= u.v) {
+          return (n / u.v).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1") + u.s;
+        }
+      }
+
+      return n.toLocaleString("en-US");
+    };
+
+    function parseAmount(input) {
+      if (!input) return NaN;
+
+      const value = input.toLowerCase().replace(/,/g, "").trim();
+      const match = value.match(/^(\d+(?:\.\d+)?)(k|m|b|t)?$/);
+
+      if (!match) return NaN;
+
+      const number = Number(match[1]);
+      const suffix = match[2];
+
+      const multipliers = {
+        k: 1e3,
+        m: 1e6,
+        b: 1e9,
+        t: 1e12
       };
-    }
 
-    const limitData = global.spinLimit[senderID];
-
-    // Reset after 12 hours
-    if (Date.now() >= limitData.resetAt) {
-      limitData.count = 0;
-      limitData.resetAt = Date.now() + spinResetTime;
-    }
-
-    // Spin limit check
-    if (limitData.count >= maxSpins) {
-      const remaining = limitData.resetAt - Date.now();
-      const hours = Math.floor(remaining / (60 * 60 * 1000));
-      const minutes = Math.floor(
-        (remaining % (60 * 60 * 1000)) / (60 * 1000)
-      );
-
-      return api.sendMessage(
-        `🎡 𝗦𝗣𝗜𝗡 𝗟𝗜𝗠𝗜𝗧\n\n` +
-        `❌ You have used all ${maxSpins} spins.\n` +
-        `⏳ Try again in ${hours}h ${minutes}m.\n\n` +
-        `🎯 Limit: ${maxSpins} spins / 12 hours`,
-        event.threadID,
-        event.messageID
-      );
+      return number * (multipliers[suffix] || 1);
     }
 
     const betAmount = parseAmount(args[0]);
+    const minBet = 100;
+    const maxBet = 1e12;
 
-    if (isNaN(betAmount)) {
-      return api.sendMessage(
-        `🎡 𝗦𝗣𝗜𝗡 𝗪𝗛𝗘𝗘𝗟\n\n` +
-        `❌ Please enter a valid amount.\n` +
-        `Example: ${this.config.guide}`,
-        event.threadID,
-        event.messageID
-      );
-    }
-
-    if (betAmount < minBet) {
-      return api.sendMessage(
-        `❌ Minimum bet: ${formatMoney(minBet)}$`,
-        event.threadID,
-        event.messageID
+    if (!Number.isFinite(betAmount) || betAmount < minBet) {
+      return message.reply(
+        `╭━━━〔 🎰 𝐒𝐏𝐈𝐍 〕━━━╮\n` +
+        `┃ 💰 Minimum Bet: 100$\n` +
+        `┃ 🎯 Example: /spin 1k\n` +
+        `╰━━━━━━━━━━━━━━━━╯`
       );
     }
 
     if (betAmount > maxBet) {
-      return api.sendMessage(
-        `❌ Maximum bet: ${formatMoney(maxBet)}$`,
-        event.threadID,
-        event.messageID
+      return message.reply(
+        `🚫 Maximum Bet: ${formatMoney(maxBet)}$`
       );
     }
 
     const userData = await usersData.get(senderID);
-    const currentMoney = userData.money || 0;
 
-    if (currentMoney < betAmount) {
-      return api.sendMessage(
-        `💳 𝗜𝗡𝗦𝗨𝗙𝗙𝗜𝗖𝗜𝗘𝗡𝗧 𝗕𝗔𝗟𝗔𝗡𝗖𝗘\n\n` +
-        `💰 Balance: ${formatMoney(currentMoney)}$\n` +
-        `🎯 Bet: ${formatMoney(betAmount)}$`,
-        event.threadID,
-        event.messageID
+    if (!userData) {
+      return message.reply("⚠️ User data not found. Please try again.");
+    }
+
+    const currentMoney = Number(userData.money || 0);
+
+    if (betAmount > currentMoney) {
+      return message.reply(
+        `╭━━━〔 💸 𝐋𝐎𝐖 𝐁𝐀𝐋𝐀𝐍𝐂𝐄 〕━━━╮\n` +
+        `┃ 💳 Balance: ${formatMoney(currentMoney)}$\n` +
+        `┃ 🎯 Bet: ${formatMoney(betAmount)}$\n` +
+        `╰━━━━━━━━━━━━━━━━━━━━╯`
       );
     }
 
-    limitData.count++;
+    if (!global.spinLimit) global.spinLimit = {};
 
-    api.setMessageReaction("🌀", event.messageID, () => {}, true);
+    const now = Date.now();
+    const resetDuration = 12 * 60 * 60 * 1000;
 
-    const spinChance = Math.floor(Math.random() * 100);
+    if (
+      !global.spinLimit[senderID] ||
+      now - global.spinLimit[senderID].lastReset >= resetDuration
+    ) {
+      global.spinLimit[senderID] = {
+        count: 0,
+        lastReset: now
+      };
+    }
 
+    const spinData = global.spinLimit[senderID];
+    const maxSpins = 12;
+
+    if (spinData.count >= maxSpins) {
+      return message.reply(
+        `╭━━━〔 🎰 𝐒𝐏𝐈𝐍 〕━━━╮\n` +
+        `┃ ❌ All 12 spins have been used.\n` +
+        `┃ ⏳ Please try again later.\n` +
+        `╰━━━━━━━━━━━━━━━━╯`
+      );
+    }
+
+    // 63% win chance, 37% loss chance.
+    const spinChance = Math.random() * 100;
+
+    let winType = "loss";
     let multiplier = 0;
-    let outcome = "loss";
 
-    // 63% win rate
-    if (spinChance < winRate) {
-      const rewardChance = Math.floor(Math.random() * 100);
+    if (spinChance < 63) {
+      const roll = Math.random() * 100;
 
-      if (rewardChance < 40) {
+      if (roll < 40) {
+        winType = "1x";
         multiplier = 1;
-      } else if (rewardChance < 70) {
+      } else if (roll < 70) {
+        winType = "2x";
         multiplier = 2;
-      } else if (rewardChance < 90) {
+      } else if (roll < 90) {
+        winType = "3x";
         multiplier = 3;
       } else {
+        winType = "4x";
         multiplier = 4;
       }
-
-      outcome = `${multiplier}x`;
     }
 
-    let finalMoney;
-    let payoutText;
-    let statusText;
-    let outcomeEmoji;
+    const win = winType !== "loss";
+    const bonus = win ? betAmount * multiplier : 0;
+    const finalMoney = win
+      ? currentMoney + bonus
+      : currentMoney - betAmount;
 
-    if (outcome === "loss") {
-      finalMoney = currentMoney - betAmount;
-      statusText = "𝗟𝗢𝗦𝗦";
-      outcomeEmoji = "💀";
-      payoutText = `-${formatMoney(betAmount)}$`;
-    } else {
-      const winAmount = betAmount * multiplier;
-      finalMoney = currentMoney + winAmount;
+    userData.money = finalMoney;
+    await usersData.set(senderID, userData);
 
-      statusText = `𝗪𝗜𝗡𝗡𝗘𝗥 • ${multiplier}X`;
-      outcomeEmoji = "🏆";
-      payoutText = `+${formatMoney(winAmount)}$`;
-    }
+    spinData.count++;
 
-    await usersData.set(senderID, {
-      money: finalMoney
-    });
+    const statusText = win
+      ? `𝐉𝐀𝐂𝐊𝐏𝐎𝐓 ${multiplier}𝐗 ✨`
+      : "𝐍𝐎 𝐌𝐀𝐓𝐂𝐇 💔";
 
-    const cacheDir = path.join(__dirname, "cache");
-    await fs.ensureDir(cacheDir);
+    const payoutText = win
+      ? `💰 Won: +${formatMoney(bonus)}$`
+      : `💸 Lost: -${formatMoney(betAmount)}$`;
 
-    const gifPath = path.join(
+    const outcomeEmoji = win ? "🎉" : "💔";
+
+    const msgBody =
+      `╭━━━〔 🎰 𝐒𝐏𝐈𝐍 〕━━━╮\n` +
+      `┃\n` +
+      `┃ ${outcomeEmoji} ${statusText}\n` +
+      `┃\n` +
+      `┃ 🎯 Bet: ${formatMoney(betAmount)}$\n` +
+      `┃ ${payoutText}\n` +
+      `┃ 💳 Balance: ${formatMoney(finalMoney)}$\n` +
+      `┃ 🎮 Spins: ${spinData.count}/${maxSpins}\n` +
+      `┃\n` +
+      `╰━━━〔 𝐒𝐀𝐀𝐍 〕━━━╯\n` +
+      `〲 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃 〲`;
+
+    const filePath = path.join(
       cacheDir,
-      `spin_${Date.now()}_${senderID}.gif`
+      `spin_${senderID}_${now}.gif`
     );
 
     try {
-      const gifUrl = GIF_URLS[outcome];
+      if (typeof api.setMessageReaction === "function") {
+        api.setMessageReaction("🌀", event.messageID, () => {}, true);
+      }
 
-      const response = await axios.get(gifUrl, {
-        responseType: "arraybuffer",
-        timeout: 15000
+      const imageResponse = await axios({
+        url: GIF_URLS[winType],
+        method: "GET",
+        responseType: "stream",
+        timeout: 20000,
+        headers: {
+          "User-Agent": "Mozilla/5.0"
+        }
       });
 
-      await fs.writeFile(gifPath, response.data);
+      const writer = fs.createWriteStream(filePath);
+      imageResponse.data.pipe(writer);
 
-      await api.sendMessage(
-        {
-          body:
-            `🎡 𝗦𝗣𝗜𝗡 𝗪𝗛𝗘𝗘𝗟\n` +
-            `╭──────────────╮\n` +
-            `│ ${outcomeEmoji} ${statusText}\n` +
-            `│ 💰 ${payoutText}\n` +
-            `│ 💳 Balance: ${formatMoney(finalMoney)}$\n` +
-            `╰──────────────╯\n\n` +
-            `🎯 Win Rate: ${winRate}%\n` +
-            `🎲 Spins: ${limitData.count}/${maxSpins}\n` +
-            `⏳ Limit resets every 12 hours`,
-          attachment: fs.createReadStream(gifPath)
-        },
-        event.threadID,
-        () => {
-          api.setMessageReaction(
-            outcome === "loss" ? "❌" : "✅",
-            event.messageID,
-            () => {},
-            true
-          );
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+        imageResponse.data.on("error", reject);
+      });
 
-          setTimeout(() => {
-            fs.remove(gifPath).catch(() => {});
-          }, 10000);
-        },
-        event.messageID
-      );
+      await new Promise((resolve, reject) => {
+        api.sendMessage(
+          {
+            body: msgBody,
+            attachment: fs.createReadStream(filePath)
+          },
+          threadID,
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          },
+          event.messageID
+        );
+      });
+
+      if (typeof api.setMessageReaction === "function") {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
+      }
     } catch (error) {
-      // GIF download fail হলেও result দেখাবে
-      await api.sendMessage(
-        `🎡 𝗦𝗣𝗜𝗡 𝗪𝗛𝗘𝗘𝗟\n` +
-        `╭──────────────╮\n` +
-        `│ ${outcomeEmoji} ${statusText}\n` +
-        `│ 💰 ${payoutText}\n` +
-        `│ 💳 Balance: ${formatMoney(finalMoney)}$\n` +
-        `╰──────────────╯\n\n` +
-        `🎯 Win Rate: ${winRate}%\n` +
-        `🎲 Spins: ${limitData.count}/${maxSpins}\n` +
-        `⏳ Limit resets every 12 hours`,
-        event.threadID,
-        event.messageID
-      );
+      console.error("[SPIN ERROR]", error.message);
 
-      api.setMessageReaction(
-        outcome === "loss" ? "❌" : "✅",
-        event.messageID,
-        () => {},
-        true
-      );
+      if (typeof api.setMessageReaction === "function") {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+      }
 
-      fs.remove(gifPath).catch(() => {});
+      return message.reply(msgBody);
+    } finally {
+      setTimeout(() => {
+        fs.remove(filePath).catch(() => {});
+      }, 5000);
     }
   }
 };

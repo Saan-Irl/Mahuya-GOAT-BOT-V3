@@ -1,7 +1,11 @@
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const { createReadStream } = require("fs");
 
-const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_CONFIG_URL = "https://raw.githubusercontent.com/negative-xalman/xalmanx210/refs/heads/main/apis.json";
 const API_KEY = "xalman-hub";
+
 let apiBaseUrl = null;
 let apiConfigRequest = null;
 
@@ -28,15 +32,12 @@ async function getApiBaseUrl() {
 
   return apiConfigRequest;
 }
-const fs = require("fs");
-const path = require("path");
-const { createReadStream } = require("fs");
 
 module.exports = {
   config: {
     name: "sing",
-    version: "3.5",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    version: "3.6",
+    author: "Saan",
     countDown: 5,
     role: 0,
     shortDescription: "Search or download MP3",
@@ -47,62 +48,124 @@ module.exports = {
 
   onStart: async function ({ api, event, args }) {
     const { threadID, messageID, senderID, messageReply } = event;
-    const BASE_URL = `${await getApiBaseUrl()}/api`;
 
-    let query = args.join(" ");
+    let BASE_URL;
+
+    try {
+      BASE_URL = `${await getApiBaseUrl()}/api`;
+    } catch (err) {
+      console.error("API configuration error:", err.message);
+      return api.sendMessage(
+        "⚠️ Music API configuration failed. Please try again later.",
+        threadID,
+        messageID
+      );
+    }
+
+    const query = args.join(" ").trim();
 
     if (messageReply?.body) {
       const match = messageReply.body.match(/(https?:\/\/[^\s]+)/);
+
       if (match?.[0]?.includes("youtu")) {
-        return downloadAudio(api, threadID, messageID, match[0], BASE_URL);
+        return downloadAudio(
+          api,
+          threadID,
+          messageID,
+          match[0],
+          BASE_URL
+        );
       }
     }
 
     if (query && query.includes("youtu")) {
-      return downloadAudio(api, threadID, messageID, query, BASE_URL);
+      return downloadAudio(
+        api,
+        threadID,
+        messageID,
+        query,
+        BASE_URL
+      );
     }
 
     if (!query) {
-      return api.sendMessage("❌ Please provide a song name or YouTube link.", threadID, messageID);
+      return api.sendMessage(
+        "╭━━━『 🎵 𝐒𝐀𝐀𝐍 𝐌𝐔𝐒𝐈𝐂 』━━━╮\n" +
+        "┃\n" +
+        "┃ 🔎 Enter a song name or YouTube link.\n" +
+        "┃\n" +
+        "╰━━━━━━━━━━━━━━━━━━╯\n" +
+        "➤ Example: /sing Arijit Singh songs",
+        threadID,
+        messageID
+      );
     }
 
     try {
-      const { data } = await axios.get(`${BASE_URL}/ytsearch?q=${encodeURIComponent(query)}`);
+      const { data } = await axios.get(
+        `${BASE_URL}/ytsearch?q=${encodeURIComponent(query)}`,
+        { timeout: 30000 }
+      );
+
       const results = data.results?.slice(0, 5);
 
       if (!results || results.length === 0) {
-        return api.sendMessage("❌ No songs found.", threadID, messageID);
+        return api.sendMessage(
+          "❌ No songs found. Try another search.",
+          threadID,
+          messageID
+        );
       }
 
-      let msg = "🎵 𝗠𝗨𝗦𝗜𝗖 𝗦𝗘𝗔𝗥𝗖𝗛 𝗥𝗘𝗦𝗨𝗟𝗧𝗦\n━━━━━━━━━━━━━━━\n";
+      let msg =
+        "╭━━━『 🎵 𝐌𝐔𝐒𝐈𝐂 𝐒𝐄𝐀𝐑𝐂𝐇 』━━━╮\n\n";
+
       const attachments = [];
       const tempFiles = [];
 
       for (let i = 0; i < results.length; i++) {
         const video = results[i];
-        msg += `${i + 1}. ${video.title}\n⏱️ ${video.duration || "N/A"}\n📺 ${video.channel || "Unknown"}\n\n`;
+
+        msg +=
+          `╭─『 ${i + 1} 』\n` +
+          `┃ 🎶 ${video.title || "Unknown"}\n` +
+          `┃ 👤 ${video.channel || "Unknown"}\n` +
+          `┃ ⏱️ ${video.duration || "N/A"}\n` +
+          `╰──────────────\n\n`;
 
         if (video.thumbnail) {
           try {
             const thumbResponse = await axios({
               url: video.thumbnail,
               method: "GET",
-              responseType: "arraybuffer"
+              responseType: "arraybuffer",
+              timeout: 15000
             });
 
-            const tempThumbPath = path.join(__dirname, `temp_thumb_${Date.now()}_${i}.jpg`);
+            const tempThumbPath = path.join(
+              __dirname,
+              `temp_thumb_${Date.now()}_${i}.jpg`
+            );
+
             fs.writeFileSync(tempThumbPath, thumbResponse.data);
             tempFiles.push(tempThumbPath);
             attachments.push(createReadStream(tempThumbPath));
           } catch (err) {
-            console.error(`Failed to download thumbnail ${i}:`, err.message);
+            console.error(
+              `Failed to download thumbnail ${i}:`,
+              err.message
+            );
           }
         }
       }
 
-      msg += "━━━━━━━━━━━━━━━\n📥 Reply with 1-5 to download";
+      msg +=
+        "━━━━━━━━━━━━━━━━━━\n" +
+        "📥 Reply with 1–5 to download\n" +
+        "👤 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃";
 
       const messageData = { body: msg };
+
       if (attachments.length > 0) {
         messageData.attachment = attachments;
       }
@@ -117,7 +180,10 @@ module.exports = {
             } catch {}
           });
 
-          if (err) return;
+          if (err || !info) {
+            console.error("Failed to send search results:", err);
+            return;
+          }
 
           global.GoatBot.onReply.set(info.messageID, {
             commandName: this.config.name,
@@ -131,8 +197,13 @@ module.exports = {
       );
 
     } catch (err) {
-      console.log(err);
-      return api.sendMessage("⚠️ Search failed.", threadID, messageID);
+      console.error("Music search error:", err.message);
+
+      return api.sendMessage(
+        "⚠️ Song search failed. Please try again later.",
+        threadID,
+        messageID
+      );
     }
   },
 
@@ -141,75 +212,155 @@ module.exports = {
 
     if (senderID !== Reply.author) return;
 
-    const index = parseInt(body) - 1;
-    if (isNaN(index) || index < 0 || index >= Reply.results.length) {
-      return api.sendMessage("❌ Invalid choice. Choose 1-5.", threadID, messageID);
+    const choice = String(body || "").trim();
+
+    if (!/^[1-5]$/.test(choice)) {
+      return api.sendMessage(
+        "❌ Invalid choice. Reply with a number from 1 to 5.",
+        threadID,
+        messageID
+      );
+    }
+
+    const index = Number(choice) - 1;
+
+    if (index >= Reply.results.length) {
+      return api.sendMessage(
+        "❌ This song is not available in the search results.",
+        threadID,
+        messageID
+      );
     }
 
     const selected = Reply.results[index];
 
     try {
-      await api.unsendMessage(Reply.messageID, threadID);
+      await api.unsendMessage(Reply.messageID);
     } catch {}
 
-    return downloadAudio(api, threadID, messageID, selected.url, Reply.baseUrl, selected.duration);
+    return downloadAudio(
+      api,
+      threadID,
+      messageID,
+      selected.url,
+      Reply.baseUrl,
+      selected.duration
+    );
   }
 };
 
-async function downloadAudio(api, threadID, messageID, url, baseUrl, duration = "N/A") {
+async function downloadAudio(
+  api,
+  threadID,
+  messageID,
+  url,
+  baseUrl,
+  duration = "N/A"
+) {
   let waitMsg;
   let tempFilePath = null;
 
   try {
-    waitMsg = await api.sendMessage("⏳ Processing Audio...", threadID);
+    waitMsg = await api.sendMessage(
+      "⏳ 𝐏𝐑𝐎𝐂𝐄𝐒𝐒𝐈𝐍𝐆 𝐀𝐔𝐃𝐈𝐎...\n🎵 Please wait while your song is downloading.",
+      threadID
+    );
 
-    const { data } = await axios.get(`${baseUrl}/ytmp3?url=${encodeURIComponent(url)}`);
+    const { data } = await axios.get(
+      `${baseUrl}/ytmp3?url=${encodeURIComponent(url)}`,
+      { timeout: 60000 }
+    );
 
     if (!data.success || !data.url) {
-      try { await api.unsendMessage(waitMsg.messageID, threadID); } catch {}
-      return api.sendMessage("❌ Failed to download audio.", threadID, messageID);
+      try {
+        if (waitMsg?.messageID) {
+          await api.unsendMessage(waitMsg.messageID);
+        }
+      } catch {}
+
+      return api.sendMessage(
+        "❌ Failed to download audio. Please try another song.",
+        threadID,
+        messageID
+      );
     }
 
     const response = await axios({
       url: data.url,
       method: "GET",
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
+      timeout: 120000,
+      maxContentLength: 50 * 1024 * 1024
     });
 
-    tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp3`);
+    tempFilePath = path.join(
+      __dirname,
+      `temp_saan_${Date.now()}.mp3`
+    );
+
     fs.writeFileSync(tempFilePath, response.data);
 
-    try { await api.unsendMessage(waitMsg.messageID, threadID); } catch {}
+    try {
+      if (waitMsg?.messageID) {
+        await api.unsendMessage(waitMsg.messageID);
+      }
+    } catch {}
+
+    const songTitle = data.title || "Unknown";
+    const songDuration = duration || data.duration || "N/A";
 
     return api.sendMessage(
       {
-        body: `🎵 ${data.title || "Unknown"}\n👤 ${data.author || "Unknown"}\n⏱️ ${duration}`,
+        body:
+          "╭━━━『 🎵 𝐌𝐏𝟑 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐃 』━━━╮\n" +
+          "┃\n" +
+          `┃ 🎶 Song: ${songTitle}\n` +
+          "┃ 👤 Saan Exhausted\n" +
+          `┃ ⏱️ Duration: ${songDuration}\n` +
+          "┃\n" +
+          "╰━━━━━━━━━━━━━━━━━━╯",
         attachment: createReadStream(tempFilePath)
       },
       threadID,
-      (err) => {
+      err => {
         if (tempFilePath && fs.existsSync(tempFilePath)) {
-          try { fs.unlinkSync(tempFilePath); } catch {}
+          try {
+            fs.unlinkSync(tempFilePath);
+          } catch {}
         }
+
         if (err) {
           console.error("Error sending audio:", err);
-          return api.sendMessage("⚠️ Failed to send audio.", threadID, messageID);
+
+          return api.sendMessage(
+            "⚠️ Failed to send the audio file. Please try again.",
+            threadID,
+            messageID
+          );
         }
       },
       messageID
     );
 
   } catch (err) {
-    console.log(err);
+    console.error("Audio download error:", err.message);
 
     if (tempFilePath && fs.existsSync(tempFilePath)) {
-      try { fs.unlinkSync(tempFilePath); } catch {}
+      try {
+        fs.unlinkSync(tempFilePath);
+      } catch {}
     }
 
     if (waitMsg?.messageID) {
-      try { await api.unsendMessage(waitMsg.messageID, threadID); } catch {}
+      try {
+        await api.unsendMessage(waitMsg.messageID);
+      } catch {}
     }
 
-    return api.sendMessage("⚠️ Failed to process audio. The file might be too large.", threadID, messageID);
+    return api.sendMessage(
+      "⚠️ Failed to process audio. The file may be too large or the API may be unavailable.",
+      threadID,
+      messageID
+    );
   }
 }
