@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_CONFIG_URL = "https://raw.githubusercontent.com/codex-xalman/xalmanx210/refs/heads/main/apis.json";
 const API_KEY = "xalman-hub";
 let apiBaseUrl = null;
 let apiConfigRequest = null;
@@ -57,33 +57,25 @@ module.exports = {
     name: "quiz",
     aliases: ["qz"],
     version: "8.0",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
-    countDown: 10,
+    author: "Saan",
+    countDown: 8,
     role: 0,
     description: "Play a random quiz with elegant design and automatic clean-up",
     category: "GAMES",
-    guide:
-      "{pn} : random bangla quiz\n" +
-      "{pn} bn / bangla : bangla quiz\n" +
-      "{pn} en / english : english quiz\n" +
-      "{pn} math : math quiz\n" +
-      "{pn} list : total questions (all categories)\n" +
-      "{pn} list <category> : total questions in a category"
+    guide: "{pn} : random bangla quiz\n{pn} bn / bangla : bangla quiz\n{pn} en / english : english quiz\n{pn} math : math quiz\n{pn} list : total questions (all categories)\n{pn} list <category> : total questions in a category"
   },
 
   onStart: async function ({ event, message, args, api }) {
     const { senderID } = event;
     const BASE_URL = `${await getApiBaseUrl()}/api/quiz`;
 
-    // QUIZ DATABASE LIST
     if (args[0] === "list" || args[0] === "total") {
       const rawCategory = args[1];
       const category = normalizeCategory(rawCategory);
 
       if (rawCategory && !category) {
         return message.reply(
-          `❌ Invalid category: "${rawCategory}"\n` +
-          `Valid: bn, en, math`
+          `❌ Invalid category: "${rawCategory}"\n✅ Valid categories: bn/bangla, en/english, math`
         );
       }
 
@@ -91,81 +83,62 @@ module.exports = {
         const url = category
           ? `${BASE_URL}?list=true&category=${category}`
           : `${BASE_URL}?list=true`;
-
         const res = await axios.get(url);
         const data = res.data;
 
-        let listMsg;
+        const databaseAuthor = "👤 𝗦𝗔𝗔𝗡 𝗘𝗫𝗛𝗔𝗨𝗦𝗧𝗘𝗗";
 
+        let listMsg;
         if (data.by_category) {
           listMsg =
-            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦\n` +
-            `━━━━━━━━━━━━━━\n` +
-            `📝 Total : ${data.total_questions}\n` +
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📝 Total Questions : ${data.total_questions}\n` +
             `🇧🇩 Bangla : ${data.by_category.bn}\n` +
             `🇬🇧 English : ${data.by_category.en}\n` +
             `🧮 Math : ${data.by_category.math}\n` +
-            `🟢 Status : Active`;
+            `${databaseAuthor}\n` +
+            `🟢 System Status   : Active\n━━━━━━━━━━━━━━━━━━━━━━`;
         } else {
           listMsg =
-            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗦 (${data.category})\n` +
-            `━━━━━━━━━━━━━━\n` +
-            `📝 Total : ${data.total_questions}\n` +
-            `🟢 Status : Active`;
+            `📊 𝗤𝗨𝗜𝗭 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦 (${data.category})\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📝 Total Questions : ${data.total_questions}\n` +
+            `${databaseAuthor}\n` +
+            `🟢 System Status   : Active\n━━━━━━━━━━━━━━━━━━━━━━`;
         }
 
         return message.reply(listMsg);
       } catch (e) {
-        return message.reply(
-          "❌ Unable to fetch quiz database information."
-        );
+        return message.reply("❌ Unable to fetch quiz database information.");
       }
     }
 
-    // CATEGORY
     const rawCategory = args[0];
     const requestedCategory = normalizeCategory(rawCategory);
 
     if (rawCategory && !requestedCategory) {
       return message.reply(
-        `❌ Invalid category: "${rawCategory}"\n` +
-        `Valid: bn, en, math\n\n` +
-        `Usage:\n${this.config.guide.replace(
-          /{pn}/g,
-          this.config.name
-        )}`
+        `❌ Invalid category: "${rawCategory}"\n✅ Valid categories: bn/bangla, en/english, math\n\n` +
+        `Usage:\n${this.config.guide.replace(/{pn}/g, this.config.name)}`
       );
     }
 
     try {
-      const url = requestedCategory
-        ? `${BASE_URL}?category=${requestedCategory}`
-        : BASE_URL;
-
+      const url = requestedCategory ? `${BASE_URL}?category=${requestedCategory}` : BASE_URL;
       const res = await axios.get(url);
       const quiz = res.data;
 
-      if (!quiz.status) {
-        return message.reply("❌ API returned an invalid response.");
-      }
+      if (!quiz.status) return message.reply("❌ API returned an invalid response.");
 
-      const categoryLabel =
-        CATEGORY_LABELS[quiz.category] || quiz.category;
+      const categoryLabel = CATEGORY_LABELS[quiz.category] || quiz.category;
 
       const labels = ["A", "B", "C", "D"];
+      let optionsText = "";
 
-      const optionsText = quiz.options
-        .map((opt, index) => `〔${labels[index]}〕 ${opt}`)
-        .join("\n");
+      quiz.options.forEach((opt, index) => {
+        optionsText += `🔠 [ ${labels[index]} ] : ${opt}\n`;
+      });
 
-      // COMPACT PREMIUM QUIZ
-      const msgText =
-        `🧠 𝗤𝗨𝗜𝗭 𝗖𝗛𝗔𝗟𝗟𝗘𝗡𝗚𝗘 • ${categoryLabel}\n` +
-        `╭──────────────╮\n` +
-        `❓ ${quiz.question}\n` +
-        `╰──────────────╯\n\n` +
-        `${optionsText}\n\n` +
-        `⏳ Reply with A, B, C or D • 60s`;
+      const msgText = `🧠 𝗤𝗨𝗜𝗭 𝗖𝗛𝗔𝗟𝗟𝗘𝗡𝗚𝗘 (${categoryLabel})\n━━━━━━━━━━━━━━━━━━━━━━\n❓ 𝗤𝗨𝗘𝗦𝗧𝗜𝗢𝗡:\n${quiz.question}\n\n📝 𝗢𝗣𝗧𝗜𝗢𝗡𝗦:\n${optionsText}\n━━━━━━━━━━━━━━━━━━━━━━\n⏳ You have 60 seconds to reply with the correct letter (A, B, C, or D).\n`;
 
       return message.reply(msgText, (err, info) => {
         if (err) return;
@@ -187,9 +160,7 @@ module.exports = {
       });
 
     } catch (e) {
-      return message.reply(
-        "❌ Unable to establish a connection with the quiz server."
-      );
+      return message.reply("❌ Unable to establish a connection with the quiz server.");
     }
   },
 
@@ -209,7 +180,7 @@ module.exports = {
       let resultMsg = "";
 
       if (userAnswer === Reply.correctAnswer) {
-        const reward = 2000;
+        const reward = 3000;
         const userData = await usersData.get(senderID);
         const currentMoney = parseInt(userData.money || 0);
 
@@ -217,21 +188,9 @@ module.exports = {
           money: currentMoney + reward
         });
 
-        resultMsg =
-          `🎉 𝗖𝗢𝗥𝗥𝗘𝗖𝗧!\n` +
-          `╭──────────────╮\n` +
-          `✅ Choice: ${userAnswer}\n` +
-          `📖 ${Reply.correctText}\n` +
-          `💰 +${reward.toLocaleString()} ৳\n` +
-          `╰──────────────╯`;
+        resultMsg = `🎉 𝗖𝗢𝗥𝗥𝗘𝗖𝗧 𝗔𝗡𝗦𝗪𝗘𝗥!\n━━━━━━━━━━━━━━━━━━━━━━\n✅ You chose [ ${userAnswer} ].\n\n📖 Explanation:\n${Reply.correctText}\n\n💰 Reward: +${reward.toLocaleString()} ৳`;
       } else {
-        resultMsg =
-          `😞 𝗪𝗥𝗢𝗡𝗚!\n` +
-          `╭──────────────╮\n` +
-          `❌ Choice: ${userAnswer}\n` +
-          `✅ Answer: ${Reply.correctAnswer}\n` +
-          `📖 ${Reply.correctText}\n` +
-          `╰──────────────╯`;
+        resultMsg = `😞 𝗪𝗥𝗢𝗡𝗚 𝗔𝗡𝗦𝗪𝗘𝗥!\n━━━━━━━━━━━━━━━━━━━━━━\n❌ Your choice was [ ${userAnswer} ].\n\n📖 The correct answer is:\n[ ${Reply.correctAnswer} ] : ${Reply.correctText}`;
       }
 
       message.reply(resultMsg);
@@ -239,9 +198,7 @@ module.exports = {
 
     } catch (e) {
       console.error(e);
-      return message.reply(
-        "❌ An unexpected error occurred while processing your answer."
-      );
+      return message.reply("❌ An unexpected error occurred while processing your answer.");
     }
   }
 };

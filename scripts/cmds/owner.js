@@ -5,7 +5,7 @@ module.exports = {
     name: "owner",
     aliases: ["admininfo", "info", "ownerinfo"],
     version: "3.0",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    author: "Saan",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Show owner information" },
@@ -15,16 +15,20 @@ module.exports = {
 
   onStart: async function ({ api, event, message }) {
 
-    const ownerName = "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍";
+    const ownerName = "Siam Ahmed Saan";
     const ownerAge = "23";
-    const fbName = "𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃";
+    const fbName = "Siam Ahmed Saan";
     const messenger = "https://www.facebook.com/siam.ahmed.491801";
-    const whatsapp = "01898747***";
-    const telegram = "@Saan's Supremacy";
-    const address = "Gulshan Rd 133, Dhaka, Bangladesh";
-    const religion = "Islam";
-    const apiServer = "https://saan-apis.vercel.app";
-    const relationship = "In A Relationship with Mahuya Adhikari";
+    
+    const telegram = "@saansupremacy";
+    const address = "Dhaka, Gulshan, Road 133";
+
+
+
+    const brandName = "Saan Exhausted";
+    const instagram = "https://www.instagram.com/siam_exists/";
+    const tiktok = "https://www.tiktok.com/@saan.16";
+    const youtube = "https://www.youtube.com/@saan-exists";
     const videoLink = "https://files.catbox.moe/vd43nx.mp4";
     const timeBD = moment().tz("Asia/Dhaka");
     
@@ -34,17 +38,17 @@ module.exports = {
 
 👤 𝗔𝗕𝗢𝗨𝗧 𝗠𝗘:
 ● Name: ${ownerName}
+● Brand: ${brandName}
 ● Age: ${ownerAge}
-● Relationship: ${relationship}
-● Religion: ${religion}
 ● Address: ${address}
 
 📞 𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗗𝗘𝗧𝗔𝗜𝗟𝗦:
 ● Facebook: ${fbName}
 ● Fb Link: ${messenger}
-● WhatsApp: ${whatsapp}
 ● Telegram: ${telegram}
-● API Server: ${apiServer}
+● Instagram: ${instagram}
+● TikTok: ${tiktok}
+● YouTube: ${youtube}
 
 ⏰ 𝗗𝗔𝗧𝗘 & 𝗧𝗜𝗠𝗘 (𝗕𝗗):
 ● ${timeBD.format("DD MMMM, YYYY")}

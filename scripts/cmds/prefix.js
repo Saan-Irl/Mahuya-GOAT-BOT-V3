@@ -14,7 +14,7 @@ module.exports = {
 	config: {
 		name: "prefix",
 		version: "3.0",
-		author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+		author: "Saan",
 		countDown: 5,
 		role: 0,
 		description: "Change & show bot prefix ",
@@ -111,7 +111,7 @@ module.exports = {
 		const time = moment().tz("Asia/Dhaka").format("hh:mm A");
 		const date = moment().tz("Asia/Dhaka").format("DD MMM YYYY");
 
-		const owner = global.GoatBot.config.adminName || "𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃";
+		const owner = global.GoatBot.config.adminName || "Saan";
 
 		return message.reply({
 			body:
@@ -121,7 +121,7 @@ module.exports = {
 │ 💬 𝐆𝐑𝐎𝐔𝐏  ─>『 ${groupPrefix} 』
 │ 🕐 𝐓𝐈𝐌𝐄  ─>  ${time} • ${date}
 │ ⚙️ 𝐒𝐘𝐒𝐓𝐄𝐌  •   𝐎𝐍𝐋𝐈𝐍𝐄
-╰─〔 ✦𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍✦ 〕─╯`,
+╰─〔 ✦𝐏𝐎𝐖𝐄𝐑𝐄𝐃 𝐁𝐘 𝐒𝐀𝐀𝐍 𝐄𝐗𝐇𝐀𝐔𝐒𝐓𝐄𝐃✦ 〕─╯`,
 			attachment: await getStreamFromURL(gif)
 		});
 	}

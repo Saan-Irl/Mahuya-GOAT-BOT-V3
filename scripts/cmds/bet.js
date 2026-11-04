@@ -1,13 +1,13 @@
 module.exports = {
   config: {
     name: "bet",
-    version: "12.1",
+    version: "12.2",
     author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
     shortDescription: {
       en: "Random multiplier bet game with 5-hour limit"
     },
     longDescription: {
-      en: "Place a bet and win. 55% normal win, 2% normal loss, 2% jackpot and 41% draw. 12 plays per 5 hours with 12 seconds cooldown."
+      en: "Place a bet and win. 59% normal win, 2% normal loss, 2% jackpot and 37% draw. 12 plays per 5 hours with 12 seconds cooldown."
     },
     category: "GAMES",
   },
@@ -282,9 +282,11 @@ module.exports = {
       Probability:
 
       0%   -  2% = JACKPOT  (2%)
-      2%   - 57% = WIN      (55%)
-      57%  - 59% = LOSS     (2%)
-      59%  -100% = DRAW     (41%)
+      2%   - 61% = WIN      (59%)
+      61%  - 63% = LOSS     (2%)
+      63%  -100% = DRAW     (37%)
+
+      TOTAL WIN RATE = 61%
     */
 
     if (rand < 0.02 && !isForceWin) {
@@ -305,12 +307,12 @@ module.exports = {
       );
 
     } else if (
-      rand < 0.57 ||
+      rand < 0.61 ||
       isForceWin
     ) {
 
       // ==========================
-      // NORMAL WIN — 55%
+      // NORMAL WIN — 59%
       // ==========================
 
       const multi = (
@@ -331,7 +333,7 @@ module.exports = {
         currentUsage
       );
 
-    } else if (rand < 0.59) {
+    } else if (rand < 0.63) {
 
       // ==========================
       // NORMAL LOSS — 2%
@@ -349,7 +351,7 @@ module.exports = {
     } else {
 
       // ==========================
-      // DRAW — 41%
+      // DRAW — 37%
       // ==========================
 
       outMsg = getLang(
@@ -369,7 +371,7 @@ module.exports = {
 
     // ==============================
     // DIRECT RESULT
-    // No loading message
+    // No spinning message
     // No editMessage
     // ==============================
 

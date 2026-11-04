@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_CONFIG_URL = "https://raw.githubusercontent.com/codex-xalman/xalmanx210/refs/heads/main/apis.json";
 const API_KEY = "xalman-hub";
 let apiBaseUrl = null;
 let apiConfigRequest = null;
@@ -34,7 +34,7 @@ module.exports = {
     name: "font",
     aliases: ["fontstyle"],
     version: "4.3",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    author: "Saan",
     countDown: 5,
     role: 0,
     shortDescription: "Generate stylish fonts & see list",
@@ -49,7 +49,7 @@ module.exports = {
     if (args[0] && args[0].toLowerCase() === "list") {
       api.setMessageReaction("📜", messageID, () => {}, true);
       try {
-        const res = await axios.get(`${API_URL}?text=saan&style=List`);
+        const res = await axios.get(`${API_URL}?text=Saan&style=List`);
         const previews = res.data.previews;
         
         let listMsg = "❖ 𝖥𝖮𝖭𝖳 𝖲𝖳𝖸𝖫𝖨𝖲𝖳 𝖯𝖱𝖤𝖵𝖨𝖤𝖶 ❖\n━━━━━━━━━━━━━━━━━━\n";
@@ -70,7 +70,7 @@ module.exports = {
     const text = args.join(" ");
 
     if (!text || isNaN(styleID)) {
-      return api.sendMessage("╭─❍\n│ 𝖴𝗌𝖺𝗀𝖾: /font [text] [style_id]\n│ 𝖤𝗑: /font Saan Ahmed  15\n╰───────────⟡", threadID, messageID);
+      return api.sendMessage("╭─❍\n│ 𝖴𝗌𝖺𝗀𝖾: /font [text] [style_id]\n│ 𝖤𝗑: /font Saan 15\n╰───────────⟡", threadID, messageID);
     }
 
     try {

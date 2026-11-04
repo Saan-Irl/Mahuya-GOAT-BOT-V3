@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_CONFIG_URL = "https://raw.githubusercontent.com/codex-xalman/xalmanx210/refs/heads/main/apis.json";
 const API_KEY = "xalman-hub";
 let apiBaseUrl = null;
 let apiConfigRequest = null;
@@ -28,6 +28,7 @@ async function getApiBaseUrl() {
 
   return apiConfigRequest;
 }
+
 const fs = require("fs");
 const path = require("path");
 const { createReadStream } = require("fs");
@@ -36,7 +37,7 @@ module.exports = {
   config: {
     name: "sing",
     version: "3.5",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    author: "Saan",
     countDown: 5,
     role: 0,
     shortDescription: "Search or download MP3",
@@ -183,7 +184,7 @@ async function downloadAudio(api, threadID, messageID, url, baseUrl, duration = 
 
     return api.sendMessage(
       {
-        body: `🎵 ${data.title || "Unknown"}\n👤 ${data.author || "Unknown"}\n⏱️ ${duration}`,
+        body: `🎵 ${data.title || "Unknown"}\n👤 𝗦𝗔𝗔𝗡 𝗘𝗫𝗛𝗔𝗨𝗦𝗧𝗘𝗗\n⏱️ ${duration}`,
         attachment: createReadStream(tempFilePath)
       },
       threadID,

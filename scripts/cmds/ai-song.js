@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const API_CONFIG_URL = "https://raw.githubusercontent.com/goatbotnx/xalmanx210/refs/heads/main/apis.json";
+const API_CONFIG_URL = "https://raw.githubusercontent.com/codex-xalman/xalmanx210/refs/heads/main/apis.json";
 const API_KEY = "xalman-hub";
 let apiBaseUrl = null;
 let apiConfigRequest = null;
@@ -38,7 +38,7 @@ module.exports = {
     name: "ai-song",
     aliases: ["aisong", "aimusic"],
     version: "4.1",
-    author: "𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍",
+    author: "Saan",
     countDown: 20,
     role: 0,
     shortDescription: "Generate AI songs",
@@ -58,7 +58,7 @@ module.exports = {
 
 ⏱️ 𝗗𝘂𝗿𝗮𝘁𝗶𝗼𝗻: 6 – 120s (Default: 120)
 
-╰━━━〔 ⚡ Powered by 𝐒𝐈𝐀𝐌 𝐀𝐇𝐌𝐄𝐃 𝐒𝐀𝐀𝐍  〕━━━╯
+╰━━━〔 ⚡ Powered by NX AI 〕━━━╯
 `
     }
   },
@@ -109,7 +109,7 @@ Type {pn} help for full guide.`,
 
     const filePath = path.join(
       cacheDir,
-      `xalman_ai_song_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`
+      `saan_ai_song_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`
     );
 
     let loadingMessage = null;
