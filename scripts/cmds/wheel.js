@@ -57,7 +57,7 @@ module.exports = {
 
     const betAmount = parseAmount(args[0]);
     const minBet = 100;
-    const maxBet = 1e16;
+    const maxBet = 1e12;
 
     if (isNaN(betAmount) || betAmount < minBet) {
       return message.reply(`🎰 Minimum bet is 100$\nExample: /wheel 1k`);
@@ -83,7 +83,7 @@ module.exports = {
       global.wheelLimit[senderID] = { count: 0, lastReset: now };
     }
 
-    const maxSpins = 50;
+    const maxSpins = 15;
     if (global.wheelLimit[senderID].count >= maxSpins) {
       return message.reply(`🚫 Daily limit reached (${maxSpins} spins)`);
     }
